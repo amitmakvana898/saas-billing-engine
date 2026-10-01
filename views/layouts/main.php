@@ -289,14 +289,20 @@
                     <span class="hidden sm:inline">Forge</span>
                 </a>
 
-                <!-- User Avatar & Quick Exit -->
-                <div class="flex items-center space-x-1 pl-1 border-l border-white/10">
-                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-600 text-white font-black text-xs flex items-center justify-center shadow-xs" 
+                <!-- User Avatar & Prominent Logout Pill -->
+                <div class="flex items-center space-x-2 pl-2 border-l border-white/10">
+                    <div class="flex items-center space-x-2 py-1 px-2 rounded-full bg-white/5 border border-white/10" 
                          title="<?= e($user['name'] ?? 'User') ?> (<?= strtoupper($role) ?>)">
-                        <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
+                        <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-600 text-white font-black text-[11px] flex items-center justify-center shadow-xs">
+                            <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
+                        </div>
+                        <span class="hidden xl:inline text-xs font-semibold text-slate-200 max-w-[90px] truncate"><?= e($user['name'] ?? 'User') ?></span>
                     </div>
-                    <a href="<?= app_url('/logout') ?>" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-full hover:bg-white/10 transition" title="Sign Out">
-                        <i class="fa-solid fa-power-off text-[11px]"></i>
+                    <a href="<?= app_url('/logout') ?>" 
+                       class="px-3.5 py-1.5 rounded-full bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 hover:border-rose-500 transition-all duration-200 flex items-center space-x-1.5 text-xs font-bold shadow-xs hover:shadow-md hover:shadow-rose-500/25 group" 
+                       title="Sign Out of Session">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-xs group-hover:-translate-x-0.5 transition-transform duration-200"></i>
+                        <span>Logout</span>
                     </a>
                 </div>
 
@@ -389,10 +395,20 @@
                 </nav>
             </div>
 
-            <div class="pt-6 border-t border-white/10">
-                <a href="<?= app_url('/logout') ?>" class="flex items-center space-x-2 text-xs text-rose-400 font-bold hover:text-rose-300">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    <span>Sign Out</span>
+            <div class="pt-5 border-t border-white/10 space-y-3">
+                <div class="flex items-center space-x-3 px-3 py-2 rounded-2xl bg-white/5 border border-white/10">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+                        <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold text-white truncate"><?= e($user['name'] ?? 'User') ?></div>
+                        <div class="text-[10px] text-slate-400 font-mono uppercase tracking-wider"><?= strtoupper($role) ?></div>
+                    </div>
+                </div>
+                <a href="<?= app_url('/logout') ?>" 
+                   class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 font-bold text-xs transition-all shadow-md shadow-rose-950/40">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                    <span>Sign Out / Logout</span>
                 </a>
             </div>
         </div>
