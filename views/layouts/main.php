@@ -49,7 +49,8 @@
 
         /* Normal State: Center Island */
         #floatingDynamicIsland:not(.is-docked) {
-            max-width: 64rem;
+            max-width: 82rem;
+            width: calc(100% - 1.5rem);
         }
 
         /* Docked to Top-Right Corner when Scrolled */
@@ -112,7 +113,7 @@
 
         /* ─── EXPANDED STATE (When hovered/tapped while scrolled) ─── */
         #floatingDynamicIsland.is-docked.is-expanded {
-            max-width: 60rem;
+            max-width: 82rem;
             right: 1rem;
         }
         @media (min-width: 640px) {
@@ -166,8 +167,8 @@
     <!-- ═══════════════════════════════════════════════════════
          REVOLUTIONARY SCROLL-MORPHING DYNAMIC ISLAND (ORB DOCK)
          ═══════════════════════════════════════════════════════ -->
-    <header id="floatingDynamicIsland" class="fixed top-4 inset-x-0 mx-auto max-w-5xl z-50 px-3 sm:px-4 pointer-events-none">
-        <div id="islandInner" class="pointer-events-auto bg-[#0B0F19]/90 backdrop-blur-2xl border border-white/15 rounded-full px-3.5 sm:px-4 py-2 sm:py-2.5 dynamic-island-glow flex items-center justify-between gap-2 sm:gap-3 ring-1 ring-white/10 hover:ring-blue-500/40">
+    <header id="floatingDynamicIsland" class="fixed top-3 sm:top-4 inset-x-0 mx-auto max-w-7xl z-50 px-2 sm:px-4 pointer-events-none">
+        <div id="islandInner" class="pointer-events-auto bg-[#0B0F19]/95 backdrop-blur-2xl border border-white/15 rounded-full px-3 sm:px-4 py-2 dynamic-island-glow flex items-center justify-between gap-1.5 sm:gap-2 ring-1 ring-white/10 hover:ring-blue-500/40 flex-nowrap whitespace-nowrap overflow-visible">
             
             <!-- 0. THE SMALL CIRCLE ORB (Appears ONLY when scrolled down & collapsed) -->
             <div id="islandCircleOrb" class="hidden relative w-full h-full items-center justify-center text-white select-none cursor-pointer" title="Quick Navigation (Hover or Click to open)">
@@ -178,62 +179,62 @@
             </div>
 
             <!-- 1. Left: Ambient Brand Mark & Workspace Telemetry -->
-            <div id="islandBrandLeft" class="flex items-center space-x-2 sm:space-x-3 shrink-0">
+            <div id="islandBrandLeft" class="flex items-center space-x-2 shrink-0">
                 <a href="<?= app_url('/dashboard') ?>" class="flex items-center space-x-2 group">
-                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-blue-500/30 group-hover:scale-105 transition-transform font-black text-sm">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-blue-500/30 group-hover:scale-105 transition-transform font-black text-sm">
                         <i class="fa-solid fa-bolt-lightning text-xs"></i>
                     </div>
                     <span class="hidden md:inline-block font-black text-white text-sm tracking-tight">SaaSify</span>
                 </a>
 
                 <!-- Workspace Live Capsule -->
-                <div id="islandWorkspaceText" class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-mono font-bold">
+                <div id="islandWorkspaceText" class="hidden 2xl:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-mono font-bold">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
                     <span class="truncate max-w-[110px]"><?= e($tenant['name'] ?? 'Workspace') ?></span>
                 </div>
             </div>
 
             <!-- 2. Center: Kinetic Navigation Portals -->
-            <nav id="islandNavLinks" class="hidden lg:flex items-center space-x-1 text-xs font-bold transition-all duration-300">
+            <nav id="islandNavLinks" class="hidden lg:flex items-center space-x-0.5 xl:space-x-1 text-xs font-bold transition-all duration-300 shrink-0">
                 <a href="<?= app_url('/dashboard') ?>" 
-                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('dashboard', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                   class="px-2.5 xl:px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('dashboard', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
                     <i class="fa-solid fa-chart-pie text-[11px] <?= is_active('dashboard', $currentUri) ? 'text-white' : 'text-slate-400' ?>"></i>
                     <span>Dashboard</span>
                 </a>
 
                 <a href="<?= app_url('/invoices') ?>" 
-                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= (is_active('invoices', $currentUri) && !is_active('create', $currentUri)) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                   class="px-2.5 xl:px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= (is_active('invoices', $currentUri) && !is_active('create', $currentUri)) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
                     <i class="fa-solid fa-file-invoice text-[11px] <?= (is_active('invoices', $currentUri) && !is_active('create', $currentUri)) ? 'text-white' : 'text-slate-400' ?>"></i>
                     <span>Invoices</span>
                 </a>
 
                 <a href="<?= app_url('/customers') ?>" 
-                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('customers', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                   class="px-2.5 xl:px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('customers', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
                     <i class="fa-solid fa-users text-[11px] <?= is_active('customers', $currentUri) ? 'text-white' : 'text-slate-400' ?>"></i>
                     <span>Clients</span>
                 </a>
 
                 <a href="<?= app_url('/plans') ?>" 
-                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('plans', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                   class="px-2.5 xl:px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('plans', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
                     <i class="fa-solid fa-tags text-[11px] <?= is_active('plans', $currentUri) ? 'text-white' : 'text-slate-400' ?>"></i>
                     <span>Plans</span>
                 </a>
 
                 <a href="<?= app_url('/team') ?>" 
-                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('team', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                   class="px-2.5 xl:px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('team', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
                     <i class="fa-solid fa-user-shield text-[11px] <?= is_active('team', $currentUri) ? 'text-white' : 'text-slate-400' ?>"></i>
                     <span>Team</span>
                 </a>
 
                 <a href="<?= app_url('/settings') ?>" 
-                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('settings', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                   class="px-2.5 xl:px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('settings', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
                     <i class="fa-solid fa-sliders text-[11px] <?= is_active('settings', $currentUri) ? 'text-white' : 'text-slate-400' ?>"></i>
                     <span>Settings</span>
                 </a>
             </nav>
 
             <!-- 3. Right: Spotlight Command, Fast Forge Action, Profile & Collapse Button -->
-            <div id="islandActions" class="flex items-center space-x-2 shrink-0 transition-all duration-300">
+            <div id="islandActions" class="flex items-center space-x-1.5 sm:space-x-2 shrink-0 transition-all duration-300">
                 <!-- Command Palette Trigger (⌘K) -->
                 <button type="button" onclick="openCommandPalette()" 
                         class="px-2.5 sm:px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white text-xs font-medium border border-white/10 transition flex items-center space-x-1.5 shadow-2xs"
@@ -284,23 +285,28 @@
 
                 <!-- Fast Forge Invoice Capsule -->
                 <a href="<?= app_url('/invoices/create') ?>" 
-                   class="px-3 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-blue-500/30 transition flex items-center space-x-1.5 transform hover:scale-105">
+                   class="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-blue-500/30 transition flex items-center space-x-1.5 transform hover:scale-105">
                     <i class="fa-solid fa-plus text-[10px]"></i>
                     <span class="hidden sm:inline">Forge</span>
                 </a>
 
-                <!-- User Avatar & Prominent Logout Pill -->
-                <div class="flex items-center space-x-2 pl-2 border-l border-white/10">
-                    <div class="flex items-center space-x-2 py-1 px-2 rounded-full bg-white/5 border border-white/10" 
+                <!-- User Profile & Integrated Logout Station (Strictly inside black pill) -->
+                <div class="flex items-center space-x-1.5 pl-2 border-l border-white/10 shrink-0">
+                    <!-- User Name & Avatar (Clearly visible with crisp typography) -->
+                    <div class="flex items-center space-x-2 py-1 px-2.5 rounded-full bg-white/10 border border-white/15 shadow-xs" 
                          title="<?= e($user['name'] ?? 'User') ?> (<?= strtoupper($role) ?>)">
-                        <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-600 text-white font-black text-[11px] flex items-center justify-center shadow-xs">
+                        <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-600 text-white font-black text-[11px] flex items-center justify-center shrink-0 shadow-xs">
                             <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
                         </div>
-                        <span class="hidden xl:inline text-xs font-semibold text-slate-200 max-w-[90px] truncate"><?= e($user['name'] ?? 'User') ?></span>
+                        <span class="text-xs font-bold text-white max-w-[120px] sm:max-w-[140px] truncate inline-block">
+                            <?= e($user['name'] ?? 'User') ?>
+                        </span>
                     </div>
+
+                    <!-- Clear, High-Contrast Logout Button -->
                     <a href="<?= app_url('/logout') ?>" 
-                       class="px-3.5 py-1.5 rounded-full bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 hover:border-rose-500 transition-all duration-200 flex items-center space-x-1.5 text-xs font-bold shadow-xs hover:shadow-md hover:shadow-rose-500/25 group" 
-                       title="Sign Out of Session">
+                       class="px-2.5 sm:px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 hover:border-rose-500 transition-all duration-200 flex items-center space-x-1.5 text-xs font-bold shrink-0 shadow-xs group" 
+                       title="Sign Out">
                         <i class="fa-solid fa-arrow-right-from-bracket text-xs group-hover:-translate-x-0.5 transition-transform duration-200"></i>
                         <span>Logout</span>
                     </a>
