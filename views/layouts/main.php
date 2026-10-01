@@ -259,18 +259,25 @@
                                 <span class="text-xs font-bold text-white tracking-wide">Live Audit Telemetry</span>
                                 <span id="notifCountPill" class="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold border border-blue-500/30">0</span>
                             </div>
-                            <button type="button" onclick="refreshNotifications(true)" class="text-[11px] text-slate-400 hover:text-blue-400 transition" title="Refresh Feed">
-                                <i class="fa-solid fa-arrows-rotate"></i>
-                            </button>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" id="notifMarkAllReadBtn" onclick="markAllNotificationsAsRead()" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium transition flex items-center space-x-1" title="Mark all as read">
+                                    <i class="fa-solid fa-check-double text-[10px]"></i>
+                                    <span class="hidden sm:inline">Mark read</span>
+                                </button>
+                                <button type="button" onclick="refreshNotifications(true)" class="text-[11px] text-slate-400 hover:text-blue-400 transition" title="Refresh Feed">
+                                    <i class="fa-solid fa-arrows-rotate"></i>
+                                </button>
+                            </div>
                         </div>
                         <div id="notifList" class="max-h-72 overflow-y-auto divide-y divide-white/5 text-xs">
                             <div class="p-4 text-center text-slate-500 text-xs">Loading activity feed...</div>
                         </div>
-                        <div class="p-2 border-t border-white/10 bg-white/[0.02] text-center">
-                            <span class="text-[10px] text-slate-500 flex items-center justify-center space-x-1.5">
+                        <div class="p-2.5 border-t border-white/10 bg-white/[0.02] flex items-center justify-between px-3">
+                            <span class="text-[10px] text-slate-500 flex items-center space-x-1.5">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
                                 <span>Real-time Audio Alert Synced</span>
                             </span>
+                            <span id="unreadCountSummary" class="text-[10px] text-slate-400 font-mono">0 unread</span>
                         </div>
                     </div>
                 </div>
@@ -671,10 +678,103 @@
     }
 
     // ==========================================
-    // LIVE NOTIFICATION CENTER & WEB AUDIO ALERT
+    // LIVE NOTIFICATION CENTER & SEEN TRACKING
     // ==========================================
-    let lastKnownNotifId = localStorage.getItem('last_known_notif_id') || null;
+    const SEEN_NOTIF_KEY = 'saasify_seen_notif_ids_v1';
+    let currentNotifList = [];
     let notifDrawerOpen = false;
+    let autoSeenTimer = null;
+
+    function getSeenNotifIds() {
+        try {
+            const raw = localStorage.getItem(SEEN_NOTIF_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveSeenNotifIds(ids) {
+        try {
+            // Keep at most last 150 IDs
+            const trimmed = ids.slice(-150);
+            localStorage.setItem(SEEN_NOTIF_KEY, JSON.stringify(trimmed));
+        } catch (e) {}
+    }
+
+    function isNotifSeen(id) {
+        const seen = getSeenNotifIds();
+        return seen.includes(String(id));
+    }
+
+    function applySeenStyleToItem(id) {
+        const row = document.getElementById('notif-item-' + id);
+        if (!row) return;
+        // Remove high-light active styles (high light no thavu joy)
+        row.classList.remove('bg-indigo-950/40', 'border-indigo-400', 'hover:bg-indigo-900/40');
+        row.classList.add('bg-transparent', 'border-transparent', 'hover:bg-white/[0.04]', 'opacity-80', 'hover:opacity-100');
+        row.title = 'Read';
+
+        // Remove 'New' glowing badge
+        const badge = row.querySelector('.notif-new-badge');
+        if (badge) badge.remove();
+
+        // Mute title
+        const title = row.querySelector('.notif-title');
+        if (title) {
+            title.classList.remove('text-white', 'font-bold');
+            title.classList.add('text-slate-300', 'font-medium');
+        }
+    }
+
+    function markNotifAsSeen(id) {
+        const seen = getSeenNotifIds();
+        const strId = String(id);
+        if (!seen.includes(strId)) {
+            seen.push(strId);
+            saveSeenNotifIds(seen);
+        }
+        applySeenStyleToItem(id);
+        updateUnreadBadges();
+    }
+
+    function markAllNotificationsAsRead() {
+        if (!Array.isArray(currentNotifList) || currentNotifList.length === 0) return;
+        const seen = getSeenNotifIds();
+        currentNotifList.forEach(item => {
+            const strId = String(item.id);
+            if (!seen.includes(strId)) {
+                seen.push(strId);
+            }
+            applySeenStyleToItem(item.id);
+        });
+        saveSeenNotifIds(seen);
+        updateUnreadBadges();
+    }
+
+    function updateUnreadBadges() {
+        if (!Array.isArray(currentNotifList)) return;
+        const seen = getSeenNotifIds();
+        const unreadItems = currentNotifList.filter(item => !seen.includes(String(item.id)));
+        const unreadCount = unreadItems.length;
+
+        const badge = document.getElementById('notifBadge');
+        const summary = document.getElementById('unreadCountSummary');
+
+        if (summary) {
+            summary.innerText = unreadCount > 0 ? `${unreadCount} unread` : 'All read';
+            summary.className = unreadCount > 0 ? 'text-[10px] text-indigo-400 font-mono font-bold' : 'text-[10px] text-slate-500 font-mono';
+        }
+
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.innerText = unreadCount > 9 ? '9+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    }
 
     function playChimeAlert() {
         try {
@@ -713,10 +813,19 @@
         notifDrawerOpen = !notifDrawerOpen;
         if (notifDrawerOpen) {
             drawer.classList.remove('hidden');
-            const badge = document.getElementById('notifBadge');
-            if (badge) badge.classList.add('hidden');
+            // When opened, the user sees the messages!
+            // Give a 1.2s viewing window so user spots what was highlighted as new,
+            // then automatically un-highlight them and mark them as seen!
+            if (autoSeenTimer) clearTimeout(autoSeenTimer);
+            autoSeenTimer = setTimeout(() => {
+                markAllNotificationsAsRead();
+            }, 1200);
         } else {
             drawer.classList.add('hidden');
+            if (autoSeenTimer) {
+                clearTimeout(autoSeenTimer);
+                markAllNotificationsAsRead();
+            }
         }
     }
 
@@ -727,6 +836,10 @@
             if (drawer && !drawer.classList.contains('hidden')) {
                 drawer.classList.add('hidden');
                 notifDrawerOpen = false;
+                if (autoSeenTimer) {
+                    clearTimeout(autoSeenTimer);
+                    markAllNotificationsAsRead();
+                }
             }
         }
     });
@@ -740,37 +853,39 @@
             const data = await res.json();
             if (!data.success || !Array.isArray(data.data)) return;
 
+            currentNotifList = data.data;
+
             const list = document.getElementById('notifList');
             const countPill = document.getElementById('notifCountPill');
-            const badge = document.getElementById('notifBadge');
 
-            if (countPill) countPill.innerText = data.data.length;
+            if (countPill) countPill.innerText = currentNotifList.length;
 
-            if (data.data.length === 0) {
+            if (currentNotifList.length === 0) {
                 if (list) list.innerHTML = '<div class="p-4 text-center text-slate-500 text-xs">No recent activity detected.</div>';
-                if (badge) badge.classList.add('hidden');
+                updateUnreadBadges();
                 return;
             }
 
-            const latest = data.data[0];
-            if (lastKnownNotifId && latest.id !== lastKnownNotifId && !manual) {
-                // New event detected in background! Play chime & trigger pulse badge
-                playChimeAlert();
-                if (badge) {
-                    badge.innerText = data.data.length;
-                    badge.classList.remove('hidden');
-                }
-            } else if (!lastKnownNotifId && data.data.length > 0) {
-                if (badge) {
-                    badge.innerText = data.data.length;
-                    badge.classList.remove('hidden');
-                }
+            // On first-time initialization of client storage, mark current existing items as seen
+            // so ancient audit records don't light up as fake unread alerts on fresh load
+            let seenIds = getSeenNotifIds();
+            const isFirstInit = localStorage.getItem(SEEN_NOTIF_KEY) === null;
+            if (isFirstInit) {
+                seenIds = currentNotifList.map(i => String(i.id));
+                saveSeenNotifIds(seenIds);
             }
-            lastKnownNotifId = latest.id;
-            localStorage.setItem('last_known_notif_id', latest.id);
+
+            // Check if there are newly arrived events that haven't been seen
+            const unreadItems = currentNotifList.filter(i => !seenIds.includes(String(i.id)));
+            if (unreadItems.length > 0 && !manual && !isFirstInit) {
+                playChimeAlert();
+            }
 
             if (list) {
-                list.innerHTML = data.data.map(item => {
+                list.innerHTML = currentNotifList.map(item => {
+                    const strId = String(item.id);
+                    const isSeen = seenIds.includes(strId);
+
                     let iconClass = 'fa-circle-info text-blue-400 bg-blue-500/10';
                     const act = (item.action || '').toLowerCase();
                     if (act.includes('invoice') || act.includes('payment')) {
@@ -781,14 +896,33 @@
                         iconClass = 'fa-user-check text-indigo-400 bg-indigo-500/10';
                     }
 
+                    // Highlight style for unread vs Clean muted style for seen
+                    const containerStyle = isSeen 
+                        ? 'bg-transparent border-l-2 border-transparent hover:bg-white/[0.04] opacity-80 hover:opacity-100'
+                        : 'bg-indigo-950/40 border-l-2 border-indigo-400 hover:bg-indigo-900/40';
+
+                    const titleStyle = isSeen 
+                        ? 'font-medium text-slate-300' 
+                        : 'font-bold text-white';
+
+                    const newBadge = isSeen 
+                        ? '' 
+                        : `<span class="notif-new-badge inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-indigo-500/25 text-indigo-300 border border-indigo-400/30 shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-indigo-400 mr-1 animate-pulse"></span>New</span>`;
+
                     return `
-                        <div class="p-3 hover:bg-white/[0.04] transition flex items-start space-x-2.5">
+                        <div id="notif-item-${item.id}"
+                             onclick="markNotifAsSeen('${item.id}')"
+                             class="p-3 transition-all duration-300 flex items-start space-x-2.5 cursor-pointer ${containerStyle}"
+                             title="${isSeen ? 'Read' : 'Click to mark as read'}">
                             <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs ${iconClass}">
                                 <i class="fa-solid ${iconClass.split(' ')[0]}"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-1">
-                                    <span class="font-bold text-slate-200 text-xs truncate">${item.action}</span>
+                                <div class="flex items-center justify-between gap-1.5">
+                                    <div class="flex items-center space-x-1.5 truncate">
+                                        <span class="notif-title text-xs truncate ${titleStyle}">${item.action}</span>
+                                        ${newBadge}
+                                    </div>
                                     <span class="text-[10px] text-slate-500 shrink-0 font-mono">${item.time_ago}</span>
                                 </div>
                                 <p class="text-[11px] text-slate-400 line-clamp-2 mt-0.5">${item.description || ''}</p>
@@ -798,6 +932,8 @@
                     `;
                 }).join('');
             }
+
+            updateUnreadBadges();
         } catch (err) {
             console.error('Failed to poll notifications:', err);
         }
