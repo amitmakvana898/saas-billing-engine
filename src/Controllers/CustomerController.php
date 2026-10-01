@@ -168,4 +168,122 @@ class CustomerController
         $customers = $this->customerRepo->listByTenant($tenant['id']);
         return Response::json($customers);
     }
+
+    public function downloadSampleCsv(?Request $request = null): Response
+    {
+        $headers = ['Name', 'Company Name', 'Email', 'Phone', 'GSTIN', 'Address', 'City', 'State', 'Pincode'];
+        $sampleRows = [
+            ['Tata Consultancy Services', 'TCS Limited', 'procurement@tcs.com', '+91 9820011223', '27AAACT2727Q1ZW', 'TCS House Raveline Street', 'Mumbai', 'Maharashtra', '400001'],
+            ['Infosys BPM', 'Infosys Limited', 'vendor-desk@infosys.com', '+91 8028520261', '29AAACI1234A1Z5', 'Electronics City Hosur Road', 'Bengaluru', 'Karnataka', '560100'],
+            ['Reliance Jio Platforms', 'Jio Platforms Ltd', 'billing@jio.com', '+91 2244778899', '24AABCR2020A1Z9', 'Reliance Corporate Park Ghansoli', 'Navi Mumbai', 'Maharashtra', '400701']
+        ];
+
+        $stream = fopen('php://temp', 'r+');
+        fputs($stream, "\xEF\xBB\xBF"); // UTF-8 BOM
+        fputcsv($stream, $headers);
+        foreach ($sampleRows as $row) {
+            fputcsv($stream, $row);
+        }
+        rewind($stream);
+        $csv = stream_get_contents($stream);
+        fclose($stream);
+
+        return new Response($csv, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="sample_clients_template.csv"',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
+    }
+
+    public function importCsv(Request $request): Response
+    {
+        $tenant = current_tenant();
+        $user = auth_user();
+
+        if (empty($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+            flash('error', 'Please choose a valid CSV file to upload.');
+            return redirect('/customers');
+        }
+
+        $fileTmp = $_FILES['csv_file']['tmp_name'];
+        $fileName = $_FILES['csv_file']['name'];
+
+        if (!str_ends_with(strtolower($fileName), '.csv')) {
+            flash('error', 'Only .csv files are supported for bulk client import.');
+            return redirect('/customers');
+        }
+
+        $handle = fopen($fileTmp, 'r');
+        if (!$handle) {
+            flash('error', 'Failed to read uploaded CSV file.');
+            return redirect('/customers');
+        }
+
+        // Read header row
+        $headers = fgetcsv($handle);
+        if (!$headers) {
+            fclose($handle);
+            flash('error', 'Uploaded CSV file appears to be empty.');
+            return redirect('/customers');
+        }
+
+        $imported = 0;
+        $skipped = 0;
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (empty($row) || (count($row) === 1 && empty($row[0]))) {
+                continue;
+            }
+
+            $name = trim($row[0] ?? '');
+            $company = trim($row[1] ?? '');
+            $email = trim($row[2] ?? '');
+            $phone = trim($row[3] ?? '');
+            $gstin = strtoupper(trim($row[4] ?? ''));
+            $address = trim($row[5] ?? '');
+            $city = trim($row[6] ?? '');
+            $state = trim($row[7] ?? '');
+            $pincode = trim($row[8] ?? '');
+
+            if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $skipped++;
+                continue;
+            }
+
+            // Check if customer email already exists in tenant
+            $existing = $this->customerRepo->findByEmail($email, $tenant['id']);
+            if ($existing) {
+                $skipped++;
+                continue;
+            }
+
+            $this->customerRepo->create([
+                'tenant_id' => $tenant['id'],
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'company_name' => $company,
+                'gstin' => $gstin,
+                'address' => $address,
+                'city' => $city,
+                'state' => $state,
+                'pincode' => $pincode,
+            ]);
+            $imported++;
+        }
+
+        fclose($handle);
+
+        $this->auditRepo->log(
+            $tenant['id'],
+            $user['id'] ?? null,
+            $user['name'] ?? 'User',
+            'customer.bulk_imported',
+            "Bulk imported {$imported} clients via CSV ({$skipped} skipped/duplicates)"
+        );
+
+        flash('success', "Import completed: {$imported} clients successfully registered! ({$skipped} duplicates/invalid rows skipped).");
+        return redirect('/customers');
+    }
 }

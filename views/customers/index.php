@@ -44,6 +44,12 @@ $gstPercentage = ($clientCount > 0) ? round(($gstCount / $clientCount) * 100) : 
                     <span>+ Register Client</span>
                 </button>
 
+                <button type="button" onclick="document.getElementById('importClientsModal').classList.remove('hidden')" 
+                        class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10 font-bold text-xs transition flex items-center space-x-2">
+                    <i class="fa-solid fa-file-arrow-up text-emerald-400 text-xs"></i>
+                    <span>Import CSV</span>
+                </button>
+
                 <a href="<?= app_url('/invoices/create') ?>" 
                    class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10 font-bold text-xs transition flex items-center space-x-2">
                     <i class="fa-solid fa-file-invoice text-blue-400 text-xs"></i>
@@ -538,6 +544,65 @@ $gstPercentage = ($clientCount > 0) ? round(($gstCount / $clientCount) * 100) : 
                 <button type="submit" 
                         class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/25 transition">
                     <i class="fa-solid fa-check mr-1.5"></i> Update Client Profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Import Clients via CSV -->
+<div id="importClientsModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-100">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold">
+                    <i class="fa-solid fa-file-csv"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-slate-900">Bulk Client Import</h3>
+                    <p class="text-xs text-slate-500">Upload CSV with corporate clients &amp; GSTIN details</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('importClientsModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form action="<?= app_url('/customers/import') ?>" method="POST" enctype="multipart/form-data" class="space-y-5 text-xs">
+            <?= csrf_field() ?>
+
+            <!-- Sample Download Banner -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+                <div class="space-y-0.5">
+                    <span class="font-bold text-slate-900 block text-xs">Need the CSV Template?</span>
+                    <span class="text-slate-500 text-[11px] block">Download our pre-formatted sample with headers.</span>
+                </div>
+                <a href="<?= app_url('/customers/sample-csv') ?>" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 font-bold text-xs text-blue-700 transition flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
+                    <i class="fa-solid fa-download text-xs"></i>
+                    <span>Template</span>
+                </a>
+            </div>
+
+            <!-- File Upload Input -->
+            <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Choose CSV File *</label>
+                <div class="p-4 rounded-2xl border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50/50 text-center space-y-2 transition cursor-pointer">
+                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 block"></i>
+                    <input type="file" name="csv_file" accept=".csv" required 
+                           class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
+                    <p class="text-[11px] text-slate-400">Supported columns: Name, Company, Email, Phone, GSTIN, Address, City, State, Pincode</p>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('importClientsModal').classList.add('hidden')" 
+                        class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold transition shadow-xs flex items-center space-x-1.5">
+                    <i class="fa-solid fa-upload"></i>
+                    <span>Start Bulk Import</span>
                 </button>
             </div>
         </form>

@@ -46,6 +46,18 @@ class CustomerRepository
         return $row ?: null;
     }
 
+    public function findByEmail(string $email, string $tenantId): ?array
+    {
+        $stmt = $this->db->prepare('
+            SELECT * FROM `customers` 
+            WHERE LOWER(email) = LOWER(:email) AND `tenant_id` = :tenant_id 
+            LIMIT 1
+        ');
+        $stmt->execute(['email' => trim($email), 'tenant_id' => $tenantId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
     public function create(array $data): string
     {
         $id = $data['id'] ?? bin2hex(random_bytes(16));

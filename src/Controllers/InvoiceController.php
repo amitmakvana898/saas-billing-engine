@@ -212,6 +212,86 @@ class InvoiceController
         ]);
     }
 
+    public function exportGstr1(?Request $request = null): Response
+    {
+        $tenant = current_tenant();
+        $tenantRepo = new TenantRepository();
+        $freshTenant = $tenantRepo->findById($tenant['id']) ?? $tenant;
+        $invoices = $this->invoiceService->getTenantInvoices($tenant['id']);
+
+        $filename = 'GSTR1_B2B_Report_' . ($freshTenant['subdomain'] ?? 'tax') . '_' . date('Y-m') . '.csv';
+
+        $stream = fopen('php://temp', 'r+');
+        fputs($stream, "\xEF\xBB\xBF"); // UTF-8 BOM
+
+        // Official GST Portal GSTR-1 Format Headers
+        fputcsv($stream, [
+            'GSTIN/UIN of Recipient',
+            'Receiver Name',
+            'Invoice Number',
+            'Invoice date',
+            'Invoice Value',
+            'Place Of Supply',
+            'Reverse Charge',
+            'Applicable % of Tax Rate',
+            'Invoice Type',
+            'E-Commerce GSTIN',
+            'Rate (%)',
+            'Taxable Value (INR)',
+            'Integrated Tax (IGST)',
+            'Central Tax (CGST)',
+            'State Tax (SGST)',
+            'Cess Amount'
+        ]);
+
+        $tenantGstin = $freshTenant['tax_id'] ?? '24';
+        $tenantState = substr(trim($tenantGstin), 0, 2);
+
+        foreach ($invoices as $inv) {
+            $custGstin = $inv['customer_gstin'] ?? $inv['cust_gstin'] ?? '';
+            $custState = !empty($custGstin) && strlen($custGstin) >= 2 ? substr(trim($custGstin), 0, 2) : $tenantState;
+            $isInterstate = (!empty($tenantState) && !empty($custState) && $tenantState !== $custState);
+
+            $taxCents = (int)$inv['tax_cents'];
+            $subtotalCents = (int)$inv['subtotal_cents'];
+            $totalCents = (int)($inv['total_cents'] ?? ($subtotalCents + $taxCents));
+
+            $igst = $isInterstate ? number_format($taxCents / 100, 2, '.', '') : '0.00';
+            $cgst = !$isInterstate ? number_format(round($taxCents / 2) / 100, 2, '.', '') : '0.00';
+            $sgst = !$isInterstate ? number_format(round($taxCents / 2) / 100, 2, '.', '') : '0.00';
+
+            fputcsv($stream, [
+                !empty($custGstin) ? $custGstin : 'URP',
+                $inv['client_display_name'] ?? $inv['customer_name'] ?? 'Direct B2B Client',
+                $inv['invoice_number'],
+                date('d-M-Y', strtotime($inv['created_at'])),
+                number_format($totalCents / 100, 2, '.', ''),
+                $custState . '-State',
+                'N',
+                '18.0',
+                'Regular B2B',
+                '',
+                '18',
+                number_format($subtotalCents / 100, 2, '.', ''),
+                $igst,
+                $cgst,
+                $sgst,
+                '0.00'
+            ]);
+        }
+
+        rewind($stream);
+        $csvContent = stream_get_contents($stream);
+        fclose($stream);
+
+        return new Response($csvContent, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
+    }
+
     /**
      * Public Client-Facing Payment Portal (Unauthenticated)
      */

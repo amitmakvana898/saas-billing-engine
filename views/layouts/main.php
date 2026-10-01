@@ -242,6 +242,39 @@
                     <span class="hidden sm:inline text-[11px] font-mono">⌘K</span>
                 </button>
 
+                <!-- Notification Center Bell -->
+                <div class="relative" id="notifCenterContainer">
+                    <button type="button" id="notifBellBtn" onclick="toggleNotifDrawer()" 
+                            class="relative p-1.5 sm:p-2 rounded-full bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 transition flex items-center justify-center shadow-2xs"
+                            title="Live Activity & Audit Logs">
+                        <i class="fa-regular fa-bell text-xs"></i>
+                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-rose-500 text-white rounded-full text-[9px] font-black flex items-center justify-center border border-slate-900 animate-pulse">0</span>
+                    </button>
+
+                    <!-- Notifications Dropdown Flyout -->
+                    <div id="notifDrawer" class="hidden absolute right-0 mt-3 w-80 sm:w-96 bg-[#0E131F] border border-white/15 rounded-2xl shadow-2xl shadow-black/80 backdrop-blur-2xl z-50 overflow-hidden text-left">
+                        <div class="p-3.5 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-bell text-blue-400 text-xs"></i>
+                                <span class="text-xs font-bold text-white tracking-wide">Live Audit Telemetry</span>
+                                <span id="notifCountPill" class="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold border border-blue-500/30">0</span>
+                            </div>
+                            <button type="button" onclick="refreshNotifications(true)" class="text-[11px] text-slate-400 hover:text-blue-400 transition" title="Refresh Feed">
+                                <i class="fa-solid fa-arrows-rotate"></i>
+                            </button>
+                        </div>
+                        <div id="notifList" class="max-h-72 overflow-y-auto divide-y divide-white/5 text-xs">
+                            <div class="p-4 text-center text-slate-500 text-xs">Loading activity feed...</div>
+                        </div>
+                        <div class="p-2 border-t border-white/10 bg-white/[0.02] text-center">
+                            <span class="text-[10px] text-slate-500 flex items-center justify-center space-x-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                <span>Real-time Audio Alert Synced</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Fast Forge Invoice Capsule -->
                 <a href="<?= app_url('/invoices/create') ?>" 
                    class="px-3 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-blue-500/30 transition flex items-center space-x-1.5 transform hover:scale-105">
@@ -636,6 +669,145 @@
             }
         });
     }
+
+    // ==========================================
+    // LIVE NOTIFICATION CENTER & WEB AUDIO ALERT
+    // ==========================================
+    let lastKnownNotifId = localStorage.getItem('last_known_notif_id') || null;
+    let notifDrawerOpen = false;
+
+    function playChimeAlert() {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
+            
+            // Crystal two-tone bell chime: E5 (659Hz) -> A5 (880Hz)
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            
+            const now = ctx.currentTime;
+            osc.frequency.setValueAtTime(659.25, now);
+            osc.frequency.exponentialRampToValueAtTime(880.00, now + 0.12);
+            
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.start(now);
+            osc.stop(now + 0.6);
+        } catch (e) {
+            // AudioContext silent fallback
+        }
+    }
+
+    function toggleNotifDrawer() {
+        const drawer = document.getElementById('notifDrawer');
+        if (!drawer) return;
+        notifDrawerOpen = !notifDrawerOpen;
+        if (notifDrawerOpen) {
+            drawer.classList.remove('hidden');
+            const badge = document.getElementById('notifBadge');
+            if (badge) badge.classList.add('hidden');
+        } else {
+            drawer.classList.add('hidden');
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('notifCenterContainer');
+        if (container && !container.contains(e.target)) {
+            const drawer = document.getElementById('notifDrawer');
+            if (drawer && !drawer.classList.contains('hidden')) {
+                drawer.classList.add('hidden');
+                notifDrawerOpen = false;
+            }
+        }
+    });
+
+    async function refreshNotifications(manual = false) {
+        try {
+            const res = await fetch('<?= app_url('/api/notifications') ?>', {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!data.success || !Array.isArray(data.data)) return;
+
+            const list = document.getElementById('notifList');
+            const countPill = document.getElementById('notifCountPill');
+            const badge = document.getElementById('notifBadge');
+
+            if (countPill) countPill.innerText = data.data.length;
+
+            if (data.data.length === 0) {
+                if (list) list.innerHTML = '<div class="p-4 text-center text-slate-500 text-xs">No recent activity detected.</div>';
+                if (badge) badge.classList.add('hidden');
+                return;
+            }
+
+            const latest = data.data[0];
+            if (lastKnownNotifId && latest.id !== lastKnownNotifId && !manual) {
+                // New event detected in background! Play chime & trigger pulse badge
+                playChimeAlert();
+                if (badge) {
+                    badge.innerText = data.data.length;
+                    badge.classList.remove('hidden');
+                }
+            } else if (!lastKnownNotifId && data.data.length > 0) {
+                if (badge) {
+                    badge.innerText = data.data.length;
+                    badge.classList.remove('hidden');
+                }
+            }
+            lastKnownNotifId = latest.id;
+            localStorage.setItem('last_known_notif_id', latest.id);
+
+            if (list) {
+                list.innerHTML = data.data.map(item => {
+                    let iconClass = 'fa-circle-info text-blue-400 bg-blue-500/10';
+                    const act = (item.action || '').toLowerCase();
+                    if (act.includes('invoice') || act.includes('payment')) {
+                        iconClass = 'fa-file-invoice-dollar text-emerald-400 bg-emerald-500/10';
+                    } else if (act.includes('delete') || act.includes('void') || act.includes('fail')) {
+                        iconClass = 'fa-triangle-exclamation text-rose-400 bg-rose-500/10';
+                    } else if (act.includes('customer') || act.includes('client')) {
+                        iconClass = 'fa-user-check text-indigo-400 bg-indigo-500/10';
+                    }
+
+                    return `
+                        <div class="p-3 hover:bg-white/[0.04] transition flex items-start space-x-2.5">
+                            <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs ${iconClass}">
+                                <i class="fa-solid ${iconClass.split(' ')[0]}"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="font-bold text-slate-200 text-xs truncate">${item.action}</span>
+                                    <span class="text-[10px] text-slate-500 shrink-0 font-mono">${item.time_ago}</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 line-clamp-2 mt-0.5">${item.description || ''}</p>
+                                <span class="text-[10px] text-slate-600 font-mono mt-0.5 block">By ${item.user}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        } catch (err) {
+            console.error('Failed to poll notifications:', err);
+        }
+    }
+
+    // Initial load & 20s interval background polling
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshNotifications();
+        setInterval(() => refreshNotifications(), 20000);
+    });
     </script>
 </body>
 </html>

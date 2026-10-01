@@ -47,6 +47,8 @@ $router->get('/suspended', [DashboardController::class, 'suspended'], [AuthMiddl
 
 // Customer & Client Management
 $router->get('/customers', [CustomerController::class, 'index'], $authScope);
+$router->get('/customers/sample-csv', [CustomerController::class, 'downloadSampleCsv'], $authScope);
+$router->post('/customers/import', [CustomerController::class, 'importCsv'], array_merge($authScope, [CsrfMiddleware::class]));
 $router->post('/customers', [CustomerController::class, 'store'], array_merge($authScope, [CsrfMiddleware::class]));
 $router->post('/customers/update/{id}', [CustomerController::class, 'update'], array_merge($authScope, [CsrfMiddleware::class]));
 $router->post('/customers/delete/{id}', [CustomerController::class, 'delete'], array_merge($authScope, [CsrfMiddleware::class]));
@@ -57,11 +59,15 @@ $router->get('/invoices', [InvoiceController::class, 'index'], $authScope);
 $router->get('/invoices/create', [InvoiceController::class, 'create'], $authScope);
 $router->post('/invoices', [InvoiceController::class, 'store'], array_merge($authScope, [CsrfMiddleware::class]));
 $router->get('/invoices/export', [InvoiceController::class, 'exportCsv'], $authScope);
+$router->get('/invoices/gstr1-export', [InvoiceController::class, 'exportGstr1'], $authScope);
 $router->get('/invoices/{id}', [InvoiceController::class, 'view'], $authScope);
 $router->get('/invoices/{id}/print', [InvoiceController::class, 'print'], $authScope);
 $router->post('/invoices/{id}/record-payment', [InvoiceController::class, 'recordPayment'], array_merge($authScope, [CsrfMiddleware::class]));
 $router->post('/invoices/{id}/void', [InvoiceController::class, 'voidInvoice'], array_merge($authScope, [CsrfMiddleware::class]));
 $router->post('/invoices/{id}/send-email', [InvoiceController::class, 'sendEmail'], array_merge($authScope, [CsrfMiddleware::class]));
+
+// Live Notifications Endpoint
+$router->get('/api/notifications', [\App\Controllers\NotificationController::class, 'getNotifications'], $authScope);
 
 // Subscription Plans (Viewable by all tenant members, modifications strictly RBAC guarded)
 $router->get('/plans', [SubscriptionController::class, 'showPlans'], $authScope);

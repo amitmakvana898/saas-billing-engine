@@ -68,6 +68,12 @@ foreach ($invoices as $inv) {
                     <span>Export CSV</span>
                 </a>
 
+                <a href="<?= app_url('/invoices/gstr1-export') ?>" 
+                   class="px-4 py-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-xs transition flex items-center space-x-2 shadow-xs">
+                    <i class="fa-solid fa-file-invoice-dollar text-emerald-400 text-xs"></i>
+                    <span>GSTR-1 CA Export</span>
+                </a>
+
                 <a href="<?= app_url('/customers') ?>" 
                    class="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 font-bold text-xs transition flex items-center space-x-2">
                     <i class="fa-solid fa-users text-blue-400 text-xs"></i>
