@@ -1,0 +1,28 @@
+# Environment and Secrets
+.env
+.env.backup
+.env.local
+*.key
+*.pem
+
+# Composer & Dependencies
+/vendor/
+composer.phar
+
+# Logs and Temporary files
+*.log
+/logs/
+/tmp/
+/temp/
+error_log
+
+# OS & Editor Artifacts
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Cache
+.phpunit.result.cache

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= e($title ?? 'SaaSify - Cyber-Kinetic Enterprise Billing Cockpit') ?></title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Live Financial Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .rzp-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .rzp-card:hover {
+            border-color: #CBD5E1;
+            box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .cmd-item.active-cmd, .cmd-item:hover {
+            background: #EFF6FF;
+            color: #1D4ED8;
+        }
+
+        /* Ambient Island Glow Animation */
+        @keyframes islandPulse {
+            0%, 100% { box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 25px rgba(59,130,246,0.18); }
+            50% { box-shadow: 0 22px 55px rgba(0,0,0,0.55), 0 0 40px rgba(99,102,241,0.28); }
+        }
+        .dynamic-island-glow {
+            animation: islandPulse 4s ease-in-out infinite;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           ADAPTIVE SCROLL-MORPHING SMALL CIRCLE DOCK PHYSICS
+           ═══════════════════════════════════════════════════════ */
+        #floatingDynamicIsland {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Normal State: Center Island */
+        #floatingDynamicIsland:not(.is-docked) {
+            max-width: 64rem;
+        }
+
+        /* Docked to Top-Right Corner when Scrolled */
+        #floatingDynamicIsland.is-docked {
+            right: 1rem;
+            left: auto;
+            margin: 0;
+            padding: 0;
+            max-width: max-content;
+            transform: none;
+        }
+        @media (min-width: 640px) {
+            #floatingDynamicIsland.is-docked {
+                right: 1.5rem;
+            }
+        }
+
+        #islandInner {
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* ─── PURE SMALL CIRCLE STATE (when scrolled and not expanded) ─── */
+        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandInner {
+            width: 3rem !important;      /* Exactly 48px by 48px circle */
+            height: 3rem !important;
+            min-width: 3rem !important;
+            padding: 0 !important;
+            border-radius: 9999px !important;
+            justify-content: center !important;
+            align-items: center !important;
+            cursor: pointer !important;
+            background: linear-gradient(135deg, #2563EB, #4F46E5, #7C3AED) !important;
+            border: 2px solid rgba(255, 255, 255, 0.35) !important;
+            box-shadow: 0 10px 25px -3px rgba(37, 99, 235, 0.6), 0 0 20px rgba(99, 102, 241, 0.4) !important;
+            position: relative;
+        }
+
+        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandInner:hover {
+            transform: scale(1.1);
+            box-shadow: 0 14px 30px -3px rgba(37, 99, 235, 0.75), 0 0 25px rgba(99, 102, 241, 0.55) !important;
+        }
+
+        /* Hide all regular contents when collapsed in small circle */
+        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandBrandLeft,
+        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandNavLinks,
+        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandActions {
+            display: none !important;
+        }
+
+        /* Show the Small Circle Orb Trigger */
+        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandCircleOrb {
+            display: flex !important;
+        }
+
+        /* Hide Small Circle Orb Trigger when at top or when expanded */
+        #floatingDynamicIsland:not(.is-docked) #islandCircleOrb,
+        #floatingDynamicIsland.is-expanded #islandCircleOrb {
+            display: none !important;
+        }
+
+        /* ─── EXPANDED STATE (When hovered/tapped while scrolled) ─── */
+        #floatingDynamicIsland.is-docked.is-expanded {
+            max-width: 60rem;
+            right: 1rem;
+        }
+        @media (min-width: 640px) {
+            #floatingDynamicIsland.is-docked.is-expanded {
+                right: 1.5rem;
+            }
+        }
+
+        #floatingDynamicIsland.is-docked.is-expanded #islandInner {
+            width: auto !important;
+            height: auto !important;
+            border-radius: 9999px !important;
+            padding: 0.5rem 1rem !important;
+            background: rgba(11, 15, 25, 0.96) !important;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.65), 0 0 35px rgba(59,130,246,0.35) !important;
+        }
+
+        /* Close button visible only when expanded in docked state */
+        #islandDockCloseBtn {
+            display: none;
+        }
+        #floatingDynamicIsland.is-docked.is-expanded #islandDockCloseBtn {
+            display: flex !important;
+        }
+    </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased min-h-screen flex flex-col selection:bg-blue-600 selection:text-white relative">
+
+    <?php 
+        $currentUri = $_SERVER['REQUEST_URI'] ?? '';
+        $tenant = current_tenant();
+        $user = auth_user();
+        $role = $user['role'] ?? 'member';
+
+        if (!function_exists('is_active')) {
+            function is_active(string $path, string $currentUri): bool {
+                return str_contains($currentUri, $path);
+            }
+        }
+
+        // Active page identification for the compact side pill
+        $activePageName = 'Dashboard';
+        if (is_active('invoices', $currentUri) && !is_active('create', $currentUri)) $activePageName = 'Invoices';
+        elseif (is_active('create', $currentUri)) $activePageName = 'Forge Invoice';
+        elseif (is_active('customers', $currentUri)) $activePageName = 'Clients Vault';
+        elseif (is_active('plans', $currentUri)) $activePageName = 'Plans & Tiers';
+        elseif (is_active('team', $currentUri)) $activePageName = 'Team & RBAC';
+        elseif (is_active('settings', $currentUri)) $activePageName = 'Settings';
+    ?>
+
+    <!-- ═══════════════════════════════════════════════════════
+         REVOLUTIONARY SCROLL-MORPHING DYNAMIC ISLAND (ORB DOCK)
+         ═══════════════════════════════════════════════════════ -->
+    <header id="floatingDynamicIsland" class="fixed top-4 inset-x-0 mx-auto max-w-5xl z-50 px-3 sm:px-4 pointer-events-none">
+        <div id="islandInner" class="pointer-events-auto bg-[#0B0F19]/90 backdrop-blur-2xl border border-white/15 rounded-full px-3.5 sm:px-4 py-2 sm:py-2.5 dynamic-island-glow flex items-center justify-between gap-2 sm:gap-3 ring-1 ring-white/10 hover:ring-blue-500/40">
+            
+            <!-- 0. THE SMALL CIRCLE ORB (Appears ONLY when scrolled down & collapsed) -->
+            <div id="islandCircleOrb" class="hidden relative w-full h-full items-center justify-center text-white select-none cursor-pointer" title="Quick Navigation (Hover or Click to open)">
+                <i class="fa-solid fa-bolt-lightning text-white text-base"></i>
+                <!-- Glowing Green Operational Status Beacon -->
+                <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#0B0F19] shadow-sm animate-ping"></span>
+                <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#0B0F19] shadow-sm"></span>
+            </div>
+
+            <!-- 1. Left: Ambient Brand Mark & Workspace Telemetry -->
+            <div id="islandBrandLeft" class="flex items-center space-x-2 sm:space-x-3 shrink-0">
+                <a href="<?= app_url('/dashboard') ?>" class="flex items-center space-x-2 group">
+                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-blue-500/30 group-hover:scale-105 transition-transform font-black text-sm">
+                        <i class="fa-solid fa-bolt-lightning text-xs"></i>
+                    </div>
+                    <span class="hidden md:inline-block font-black text-white text-sm tracking-tight">SaaSify</span>
+                </a>
+
+                <!-- Workspace Live Capsule -->
+                <div id="islandWorkspaceText" class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-mono font-bold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="truncate max-w-[110px]"><?= e($tenant['name'] ?? 'Workspace') ?></span>
+                </div>
+            </div>
+
+            <!-- 2. Center: Kinetic Navigation Portals -->
+            <nav id="islandNavLinks" class="hidden lg:flex items-center space-x-1 text-xs font-bold transition-all duration-300">
+                <a href="<?= app_url('/dashboard') ?>" 
+                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('dashboard', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                    <i class="fa-solid fa-chart-pie text-[11px] <?= is_active('dashboard', $currentUri) ? 'text-white' : 'text-slate-400' ?>"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="<?= app_url('/invoices') ?>" 
+                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= (is_active('invoices', $currentUri) && !is_active('create', $currentUri)) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                    <i class="fa-solid fa-file-invoice text-[11px] <?= (is_active('invoices', $currentUri) && !is_active('create', $currentUri)) ? 'text-white' : 'text-slate-400' ?>"></i>
+                    <span>Invoices</span>
+                </a>
+
+                <a href="<?= app_url('/customers') ?>" 
+                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('customers', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                    <i class="fa-solid fa-users text-[11px] <?= is_active('customers', $currentUri) ? 'text-white' : 'text-slate-400' ?>"></i>
+                    <span>Clients</span>
+                </a>
+
+                <a href="<?= app_url('/plans') ?>" 
+                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('plans', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                    <i class="fa-solid fa-tags text-[11px] <?= is_active('plans', $currentUri) ? 'text-white' : 'text-slate-400' ?>"></i>
+                    <span>Plans</span>
+                </a>
+
+                <a href="<?= app_url('/team') ?>" 
+                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('team', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                    <i class="fa-solid fa-user-shield text-[11px] <?= is_active('team', $currentUri) ? 'text-white' : 'text-slate-400' ?>"></i>
+                    <span>Team</span>
+                </a>
+
+                <a href="<?= app_url('/settings') ?>" 
+                   class="px-3 py-1.5 rounded-full transition flex items-center space-x-1.5 <?= is_active('settings', $currentUri) ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/30 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/10' ?>">
+                    <i class="fa-solid fa-sliders text-[11px] <?= is_active('settings', $currentUri) ? 'text-white' : 'text-slate-400' ?>"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- 3. Right: Spotlight Command, Fast Forge Action, Profile & Collapse Button -->
+            <div id="islandActions" class="flex items-center space-x-2 shrink-0 transition-all duration-300">
+                <!-- Command Palette Trigger (⌘K) -->
+                <button type="button" onclick="openCommandPalette()" 
+                        class="px-2.5 sm:px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white text-xs font-medium border border-white/10 transition flex items-center space-x-1.5 shadow-2xs"
+                        title="Search Command Deck (Ctrl + K)">
+                    <i class="fa-solid fa-magnifying-glass text-[10px] text-blue-400"></i>
+                    <span class="hidden sm:inline text-[11px] font-mono">⌘K</span>
+                </button>
+
+                <!-- Fast Forge Invoice Capsule -->
+                <a href="<?= app_url('/invoices/create') ?>" 
+                   class="px-3 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-blue-500/30 transition flex items-center space-x-1.5 transform hover:scale-105">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span class="hidden sm:inline">Forge</span>
+                </a>
+
+                <!-- User Avatar & Quick Exit -->
+                <div class="flex items-center space-x-1 pl-1 border-l border-white/10">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-600 text-white font-black text-xs flex items-center justify-center shadow-xs" 
+                         title="<?= e($user['name'] ?? 'User') ?> (<?= strtoupper($role) ?>)">
+                        <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
+                    </div>
+                    <a href="<?= app_url('/logout') ?>" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-full hover:bg-white/10 transition" title="Sign Out">
+                        <i class="fa-solid fa-power-off text-[11px]"></i>
+                    </a>
+                </div>
+
+                <!-- Close Button (Appears only when expanded in docked state) -->
+                <button id="islandDockCloseBtn" type="button" class="p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-white/10 transition" title="Collapse back to Small Circle">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+
+                <!-- Mobile Drawer Trigger -->
+                <button onclick="toggleMobileNav()" class="lg:hidden p-1.5 text-slate-300 hover:text-white rounded-full hover:bg-white/10 transition">
+                    <i class="fa-solid fa-bars text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MOBILE BOTTOM ERGONOMIC DYNAMIC DOCK (For Phones)
+         ═══════════════════════════════════════════════════════ -->
+    <nav id="mobileDynamicDock" class="fixed bottom-4 inset-x-4 z-50 lg:hidden pointer-events-auto bg-[#0B0F19]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-2 shadow-[0_15px_40px_rgba(0,0,0,0.6)] flex items-center justify-around text-white">
+        <a href="<?= app_url('/dashboard') ?>" class="flex flex-col items-center py-1 px-2 rounded-2xl transition <?= is_active('dashboard', $currentUri) ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white' ?>">
+            <i class="fa-solid fa-chart-pie text-sm"></i>
+            <span class="text-[9px] mt-0.5">Home</span>
+        </a>
+        <a href="<?= app_url('/invoices') ?>" class="flex flex-col items-center py-1 px-2 rounded-2xl transition <?= (is_active('invoices', $currentUri) && !is_active('create', $currentUri)) ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white' ?>">
+            <i class="fa-solid fa-file-invoice text-sm"></i>
+            <span class="text-[9px] mt-0.5">Bills</span>
+        </a>
+        <a href="<?= app_url('/invoices/create') ?>" class="w-11 h-11 -mt-5 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/40 border-2 border-[#0B0F19] transition transform active:scale-95">
+            <i class="fa-solid fa-plus text-sm"></i>
+        </a>
+        <a href="<?= app_url('/customers') ?>" class="flex flex-col items-center py-1 px-2 rounded-2xl transition <?= is_active('customers', $currentUri) ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white' ?>">
+            <i class="fa-solid fa-users text-sm"></i>
+            <span class="text-[9px] mt-0.5">Clients</span>
+        </a>
+        <button onclick="toggleMobileNav()" class="flex flex-col items-center py-1 px-2 rounded-2xl text-slate-400 hover:text-white">
+            <i class="fa-solid fa-ellipsis text-sm"></i>
+            <span class="text-[9px] mt-0.5">More</span>
+        </button>
+    </nav>
+
+    <!-- Mobile Drawer for small devices (Expanded) -->
+    <div id="mobileDrawer" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden lg:hidden">
+        <div class="fixed inset-y-0 left-0 w-72 bg-[#0B0F19] text-white p-6 flex flex-col justify-between shadow-2xl border-r border-white/10">
+            <div>
+                <div class="flex items-center justify-between pb-5 border-b border-white/10">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow">
+                            <i class="fa-solid fa-bolt-lightning text-xs"></i>
+                        </div>
+                        <div>
+                            <span class="text-base font-black text-white block leading-tight">SaaSify</span>
+                            <span class="text-[10px] text-blue-400 font-bold font-mono uppercase tracking-wider"><?= e($tenant['name'] ?? '') ?></span>
+                        </div>
+                    </div>
+                    <button onclick="toggleMobileNav()" class="text-slate-400 hover:text-white p-1.5">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <nav class="mt-6 space-y-2 text-xs font-bold">
+                    <a href="<?= app_url('/dashboard') ?>" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl transition <?= is_active('dashboard', $currentUri) ? 'bg-white/15 text-white border border-white/20' : 'text-slate-400 hover:bg-white/5 hover:text-white' ?>">
+                        <i class="fa-solid fa-chart-pie w-4 text-center"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="<?= app_url('/invoices') ?>" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl transition <?= is_active('invoices', $currentUri) ? 'bg-white/15 text-white border border-white/20' : 'text-slate-400 hover:bg-white/5 hover:text-white' ?>">
+                        <i class="fa-solid fa-file-invoice w-4 text-center"></i>
+                        <span>Invoices Hub</span>
+                    </a>
+                    <a href="<?= app_url('/invoices/create') ?>" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl transition text-white bg-blue-600/30 border border-blue-500/40">
+                        <i class="fa-solid fa-plus-circle w-4 text-center text-blue-400"></i>
+                        <span>+ Forge Invoice</span>
+                    </a>
+                    <a href="<?= app_url('/customers') ?>" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl transition <?= is_active('customers', $currentUri) ? 'bg-white/15 text-white border border-white/20' : 'text-slate-400 hover:bg-white/5 hover:text-white' ?>">
+                        <i class="fa-solid fa-users w-4 text-center"></i>
+                        <span>Client Vault</span>
+                    </a>
+                    <a href="<?= app_url('/plans') ?>" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl transition <?= is_active('plans', $currentUri) ? 'bg-white/15 text-white border border-white/20' : 'text-slate-400 hover:bg-white/5 hover:text-white' ?>">
+                        <i class="fa-solid fa-tags w-4 text-center"></i>
+                        <span>Subscription Plans</span>
+                    </a>
+                    <a href="<?= app_url('/team') ?>" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl transition <?= is_active('team', $currentUri) ? 'bg-white/15 text-white border border-white/20' : 'text-slate-400 hover:bg-white/5 hover:text-white' ?>">
+                        <i class="fa-solid fa-user-shield w-4 text-center"></i>
+                        <span>Team &amp; RBAC</span>
+                    </a>
+                    <a href="<?= app_url('/settings') ?>" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl transition <?= is_active('settings', $currentUri) ? 'bg-white/15 text-white border border-white/20' : 'text-slate-400 hover:bg-white/5 hover:text-white' ?>">
+                        <i class="fa-solid fa-sliders w-4 text-center"></i>
+                        <span>Organization Settings</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div class="pt-6 border-t border-white/10">
+                <a href="<?= app_url('/logout') ?>" class="flex items-center space-x-2 text-xs text-rose-400 font-bold hover:text-rose-300">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Sign Out</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MAIN WORKSPACE CONTENT CANVAS (With Top Island Offset)
+         ═══════════════════════════════════════════════════════ -->
+    <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-24 sm:pb-12">
+        <!-- Flash Alerts -->
+        <?php if ($success = flash('success')): ?>
+            <div class="mb-6 p-4 rounded-3xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-start space-x-3 shadow-xs">
+                <i class="fa-solid fa-circle-check text-emerald-600 mt-0.5 text-base"></i>
+                <div class="text-xs font-semibold leading-relaxed"><?= e($success) ?></div>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($error = flash('error')): ?>
+            <div class="mb-6 p-4 rounded-3xl bg-rose-50 border border-rose-200 text-rose-900 flex items-start space-x-3 shadow-xs">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 mt-0.5 text-base"></i>
+                <div class="text-xs font-semibold leading-relaxed"><?= e($error) ?></div>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($info = flash('info')): ?>
+            <div class="mb-6 p-4 rounded-3xl bg-blue-50 border border-blue-200 text-blue-900 flex items-start space-x-3 shadow-xs">
+                <i class="fa-solid fa-circle-info text-blue-600 mt-0.5 text-base"></i>
+                <div class="text-xs font-semibold leading-relaxed"><?= e($info) ?></div>
+            </div>
+        <?php endif; ?>
+
+        <?= $content ?>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SPOTLIGHT COMMAND PALETTE MODAL (Ctrl + K)
+         ═══════════════════════════════════════════════════════ -->
+    <div id="cmdPaletteModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex items-start justify-center pt-16 sm:pt-24 px-4 overflow-y-auto" onclick="handleBackdropClick(event)">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden text-slate-800" onclick="event.stopPropagation()">
+            
+            <!-- Command Input Box -->
+            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center space-x-3">
+                <i class="fa-solid fa-magnifying-glass text-blue-600 text-base"></i>
+                <input type="text" id="cmdInput" 
+                       placeholder="Type a command or jump to page (e.g. 'invoice', 'create', 'plans', 'team')..." 
+                       class="w-full bg-transparent text-slate-900 text-sm font-semibold outline-none placeholder-slate-400">
+                <kbd class="px-2 py-1 rounded-xl bg-slate-100 text-slate-600 font-mono text-[11px] font-bold border border-slate-200">ESC</kbd>
+            </div>
+
+            <!-- Command List -->
+            <div class="p-3 max-h-96 overflow-y-auto space-y-4" id="cmdList">
+                <!-- Section: Quick Actions -->
+                <div>
+                    <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Instant Actions</span>
+                    <div class="space-y-1">
+                        <a href="<?= app_url('/invoices/create') ?>" class="cmd-item flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:text-blue-700 transition">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200"><i class="fa-solid fa-plus text-xs"></i></span>
+                                <span>Forge New Tax Invoice</span>
+                            </div>
+                            <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1">Jump <i class="fa-solid fa-arrow-right text-[9px]"></i></span>
+                        </a>
+
+                        <a href="<?= app_url('/customers') ?>" class="cmd-item flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:text-blue-700 transition">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200"><i class="fa-solid fa-user-plus text-xs"></i></span>
+                                <span>Register New Customer</span>
+                            </div>
+                            <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1">Jump <i class="fa-solid fa-arrow-right text-[9px]"></i></span>
+                        </a>
+
+                        <a href="<?= app_url('/invoices/export') ?>" class="cmd-item flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:text-blue-700 transition">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-7 h-7 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200"><i class="fa-solid fa-file-csv text-xs"></i></span>
+                                <span>Export GST Ledger (CSV)</span>
+                            </div>
+                            <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1">Download <i class="fa-solid fa-download text-[9px]"></i></span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Section: Navigation Jumps -->
+                <div>
+                    <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Navigation Portals</span>
+                    <div class="space-y-1">
+                        <a href="<?= app_url('/dashboard') ?>" class="cmd-item flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:text-blue-700 transition">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200"><i class="fa-solid fa-chart-pie text-xs"></i></span>
+                                <span>Dashboard &amp; Revenue Velocity</span>
+                            </div>
+                            <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1">Open <i class="fa-solid fa-arrow-right text-[9px]"></i></span>
+                        </a>
+
+                        <a href="<?= app_url('/invoices') ?>" class="cmd-item flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:text-blue-700 transition">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200"><i class="fa-solid fa-file-invoice text-xs"></i></span>
+                                <span>Invoices Directory &amp; Payment Links</span>
+                            </div>
+                            <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1">Open <i class="fa-solid fa-arrow-right text-[9px]"></i></span>
+                        </a>
+
+                        <a href="<?= app_url('/customers') ?>" class="cmd-item flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:text-blue-700 transition">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200"><i class="fa-solid fa-users text-xs"></i></span>
+                                <span>Customer Directory &amp; GSTIN Ledger</span>
+                            </div>
+                            <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1">Open <i class="fa-solid fa-arrow-right text-[9px]"></i></span>
+                        </a>
+
+                        <a href="<?= app_url('/plans') ?>" class="cmd-item flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:text-blue-700 transition">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200"><i class="fa-solid fa-tags text-xs"></i></span>
+                                <span>Subscription Plans &amp; Tiers</span>
+                            </div>
+                            <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1">Open <i class="fa-solid fa-arrow-right text-[9px]"></i></span>
+                        </a>
+
+                        <a href="<?= app_url('/team') ?>" class="cmd-item flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:text-blue-700 transition">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200"><i class="fa-solid fa-user-shield text-xs"></i></span>
+                                <span>Team Members &amp; RBAC Control</span>
+                            </div>
+                            <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1">Open <i class="fa-solid fa-arrow-right text-[9px]"></i></span>
+                        </a>
+
+                        <a href="<?= app_url('/settings') ?>" class="cmd-item flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:text-blue-700 transition">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200"><i class="fa-solid fa-sliders text-xs"></i></span>
+                                <span>Organization Profile &amp; GST Setup</span>
+                            </div>
+                            <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1">Open <i class="fa-solid fa-arrow-right text-[9px]"></i></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Command Palette Footer -->
+            <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                <div class="flex items-center space-x-3">
+                    <span><kbd class="font-mono bg-white text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">↑</kbd> <kbd class="font-mono bg-white text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">↓</kbd> navigate</span>
+                    <span><kbd class="font-mono bg-white text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">↵</kbd> select</span>
+                </div>
+                <span class="font-mono text-blue-600 font-bold">Fast Executive Jump</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Minimal Modern Fintech Footer -->
+    <footer class="mt-auto py-6 bg-white border-t border-slate-200/90 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <span class="font-bold text-slate-800">SaaSify</span>
+                <span>&bull;</span>
+                <span>&copy; <?= date('Y') ?> SaaSify Platforms Inc.</span>
+            </div>
+            <div class="flex items-center space-x-4 font-semibold text-slate-600">
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> 99.99% Bank Uptime</span>
+                <span>&bull;</span>
+                <span class="flex items-center gap-1"><i class="fa-solid fa-shield-halved text-blue-600"></i> 100% Indian GST Compliant</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive Scripts for Morphing Dynamic Island & Command Palette -->
+    <script>
+    function toggleMobileNav() {
+        document.getElementById('mobileDrawer').classList.toggle('hidden');
+    }
+
+    function openCommandPalette() {
+        const modal = document.getElementById('cmdPaletteModal');
+        modal.classList.remove('hidden');
+        const input = document.getElementById('cmdInput');
+        input.value = '';
+        input.focus();
+        filterCommands('');
+    }
+
+    function closeCommandPalette() {
+        document.getElementById('cmdPaletteModal').classList.add('hidden');
+    }
+
+    function handleBackdropClick(event) {
+        if (event.target.id === 'cmdPaletteModal') {
+            closeCommandPalette();
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // SMART SCROLL-MORPHING SMALL CIRCLE DOCK PHYSICS
+    // ═══════════════════════════════════════════════════════════
+    const island = document.getElementById('floatingDynamicIsland');
+    const circleOrb = document.getElementById('islandCircleOrb');
+    const closeBtn = document.getElementById('islandDockCloseBtn');
+    let isHovered = false;
+    let hoverTimeout = null;
+
+    // Hover on the island container (Unfolds on hover)
+    island?.addEventListener('mouseenter', () => {
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        isHovered = true;
+        if (island.classList.contains('is-docked')) {
+            island.classList.add('is-expanded');
+        }
+    });
+
+    // Mouse leave smoothly collapses back into circle after a slight grace delay
+    island?.addEventListener('mouseleave', () => {
+        isHovered = false;
+        if (island.classList.contains('is-docked')) {
+            hoverTimeout = setTimeout(() => {
+                if (!isHovered && island.classList.contains('is-docked')) {
+                    island.classList.remove('is-expanded');
+                }
+            }, 300);
+        }
+    });
+
+    // Clicking the small circle orb toggles full expansion
+    circleOrb?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        island.classList.toggle('is-expanded');
+    });
+
+    // Explicit close button collapses back to small circle
+    closeBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        island.classList.remove('is-expanded');
+    });
+
+    // Clicking outside when expanded collapses it back to circle
+    document.addEventListener('click', (e) => {
+        if (island && island.classList.contains('is-docked') && island.classList.contains('is-expanded')) {
+            if (!island.contains(e.target)) {
+                island.classList.remove('is-expanded');
+            }
+        }
+    });
+
+    // Scroll Listener: Morph into small circle when scrolling down
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            island.classList.add('is-docked');
+            if (!isHovered) {
+                island.classList.remove('is-expanded');
+            }
+        } else {
+            // Returned to top: restore full center Dynamic Island
+            island.classList.remove('is-docked', 'is-expanded');
+        }
+    }, { passive: true });
+
+    // Global Keyboard Listener for Ctrl+K, Cmd+K, and Esc
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            const modal = document.getElementById('cmdPaletteModal');
+            if (modal.classList.contains('hidden')) {
+                openCommandPalette();
+            } else {
+                closeCommandPalette();
+            }
+        } else if (e.key === 'Escape') {
+            closeCommandPalette();
+        }
+    });
+
+    // Real-time Command Filter
+    document.getElementById('cmdInput')?.addEventListener('input', function(e) {
+        filterCommands(e.target.value.toLowerCase().trim());
+    });
+
+    function filterCommands(query) {
+        const items = document.querySelectorAll('.cmd-item');
+        items.forEach(item => {
+            const text = item.innerText.toLowerCase();
+            if (query === '' || text.includes(query)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+    </script>
+</body>
+</html>

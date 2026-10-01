@@ -1,0 +1,20 @@
+{
+    "name": "saas/billing-engine",
+    "description": "Production-Grade Multi-Tenant SaaS Billing & Subscription Engine in PHP MVC",
+    "type": "project",
+    "license": "MIT",
+    "config": {
+        "platform-check": false
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        },
+        "files": [
+            "src/Core/helpers.php"
+        ]
+    },
+    "require": {
+        "php": ">=7.4"
+    }
+}
