@@ -89,8 +89,8 @@ class InvoiceService
             $desc = trim($raw['description'] ?? '');
             if (empty($desc)) continue;
 
-            $qty = max(1, (float)($raw['qty'] ?? 1));
-            $rate = max(0, (float)($raw['rate'] ?? 0));
+            $qty = max(1, (float)($raw['qty'] ?? $raw['quantity'] ?? 1));
+            $rate = max(0, (float)($raw['rate'] ?? $raw['unit_price'] ?? 0));
             $taxRate = max(0, (float)($raw['tax_rate'] ?? 18)); // default 18% GST
 
             $lineSubtotal = round($qty * $rate * 100); // in cents/paise

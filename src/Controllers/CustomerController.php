@@ -53,6 +53,16 @@ class CustomerController
             return redirect('/customers');
         }
 
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            flash('error', 'Please enter a valid client contact email address.');
+            return redirect('/customers');
+        }
+
+        if (!empty($gstin) && !preg_match('/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/', $gstin)) {
+            flash('error', 'Invalid GSTIN format. Must be a valid 15-character alphanumeric GSTIN (e.g., 24AAACT0000A1Z5).');
+            return redirect('/customers');
+        }
+
         $id = $this->customerRepo->create([
             'tenant_id' => $tenant['id'],
             'name' => $name,
@@ -135,6 +145,16 @@ class CustomerController
 
         if (empty($name) || empty($email)) {
             flash('error', 'Client Name and Contact Email are required.');
+            return redirect('/customers');
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            flash('error', 'Please enter a valid client contact email address.');
+            return redirect('/customers');
+        }
+
+        if (!empty($gstin) && !preg_match('/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/', $gstin)) {
+            flash('error', 'Invalid GSTIN format. Must be a valid 15-character alphanumeric GSTIN (e.g., 24AAACT0000A1Z5).');
             return redirect('/customers');
         }
 

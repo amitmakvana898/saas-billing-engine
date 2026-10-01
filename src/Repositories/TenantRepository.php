@@ -89,6 +89,7 @@ class TenantRepository
         $sql = '
             SELECT 
                 t.*,
+                t.name as company_name,
                 s.status as subscription_status,
                 s.current_period_end,
                 p.name as plan_name,
