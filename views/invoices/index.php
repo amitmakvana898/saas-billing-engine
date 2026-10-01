@@ -26,56 +26,70 @@ foreach ($invoices as $inv) {
     <!-- ══════════════════════════════════════════════════════════════════
          LAYER 1: FINANCIAL TRAFFIC COMMAND CROWN
          ══════════════════════════════════════════════════════════════════ -->
-    <div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-6 sm:p-8 shadow-2xl border border-slate-800">
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B0F19] via-[#0F172A] to-[#0A0D17] text-white p-6 sm:p-8 shadow-2xl border border-white/10 backdrop-blur-2xl">
         <!-- Ambient Glow Accents -->
-        <div class="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -top-32 -right-32 w-80 h-80 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-32 -left-32 w-80 h-80 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div class="space-y-2">
-                <div class="flex items-center flex-wrap gap-2.5">
+            <!-- Left Info Section -->
+            <div class="space-y-2.5">
+                <div class="flex items-center flex-wrap gap-2">
                     <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-[11px] font-bold tracking-wider uppercase">
                         <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-                        <span>Financial Traffic &bull; Invoicing Deck</span>
+                        <span>B2B Commercial Ledger</span>
                     </span>
-                    <span class="px-2.5 py-0.5 rounded-full bg-white/10 text-slate-300 border border-white/10 text-[10px] font-bold uppercase tracking-wider font-mono">
-                        GSTIN: <?= e($tenant['tax_id'] ?? '24AAACT0000A1Z5') ?>
+                    <span class="px-2.5 py-1 rounded-full bg-white/5 text-slate-300 border border-white/10 text-[10px] font-bold font-mono uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-building-shield text-[10px] text-indigo-400"></i>
+                        <span>GSTIN: <?= e($tenant['tax_id'] ?? '24AAACT0000A1Z5') ?></span>
                     </span>
                 </div>
 
                 <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
                     <span>Commercial Invoices &amp; Receivables</span>
-                    <span class="text-xs px-2.5 py-1 rounded-full bg-blue-600/40 border border-blue-400/40 text-blue-200 font-mono font-bold">
+                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 font-mono font-bold">
                         <?= $totalInvoicesCount ?> Total
                     </span>
                 </h1>
-                <p class="text-xs text-slate-400 max-w-xl">
-                    Full-lifecycle B2B commercial ledger. Issue tax-compliant invoices, track overdue settlements with automated late penalization radar, and dispatch one-tap UPI payment links.
+                <p class="text-xs text-slate-400 max-w-xl leading-relaxed">
+                    Full-lifecycle B2B commercial invoicing. Issue tax-compliant invoices, track overdue settlements with automated penalization radar, and export official GSTR-1 returns.
                 </p>
             </div>
 
-            <!-- Instant Actions Dock -->
-            <div class="flex items-center flex-wrap gap-3">
+            <!-- Instant Actions Dock (Clean, Symmetric, Aligned) -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+                <!-- Primary Action: Forge Invoice -->
                 <a href="<?= app_url('/invoices/create') ?>" 
-                   class="px-5 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-blue-500/25 transition-all transform hover:-translate-y-0.5 flex items-center space-x-2">
+                   class="h-11 px-5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-extrabold text-xs shadow-lg shadow-blue-500/25 transition-all transform hover:-translate-y-0.5 flex items-center justify-center space-x-2 shrink-0">
                     <i class="fa-solid fa-plus text-xs"></i>
                     <span>Forge New Invoice</span>
                 </a>
 
-                <a href="<?= app_url('/invoices/export') ?>" 
-                   class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10 font-bold text-xs transition flex items-center space-x-2">
-                    <i class="fa-solid fa-file-csv text-emerald-400 text-xs"></i>
-                    <span>Export CSV</span>
-                </a>
+                <!-- Unified Export Actions Pill Group -->
+                <div class="h-11 flex items-center bg-white/[0.06] border border-white/10 rounded-2xl p-1 shadow-inner backdrop-blur-md">
+                    <!-- Standard CSV -->
+                    <a href="<?= app_url('/invoices/export') ?>" 
+                       class="h-full px-3.5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white font-bold text-xs transition flex items-center space-x-1.5"
+                       title="Export all invoices to standard CSV">
+                        <i class="fa-solid fa-file-csv text-emerald-400 text-xs"></i>
+                        <span>Export CSV</span>
+                    </a>
 
-                <a href="<?= app_url('/invoices/gstr1-export') ?>" 
-                   class="px-4 py-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-xs transition flex items-center space-x-2 shadow-xs">
-                    <i class="fa-solid fa-file-invoice-dollar text-emerald-400 text-xs"></i>
-                    <span>GSTR-1 CA Export</span>
-                </a>
+                    <div class="w-px h-5 bg-white/10 mx-0.5"></div>
 
+                    <!-- GSTR-1 CA Tax Export -->
+                    <a href="<?= app_url('/invoices/gstr1-export') ?>" 
+                       class="h-full px-3.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-xs transition flex items-center space-x-1.5 shadow-2xs"
+                       title="Official GSTR-1 B2B Format for CA and Tally">
+                        <i class="fa-solid fa-file-invoice-dollar text-emerald-400 text-xs"></i>
+                        <span>GSTR-1 CA Export</span>
+                    </a>
+                </div>
+
+                <!-- Customer Vault Quick Link -->
                 <a href="<?= app_url('/customers') ?>" 
-                   class="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 font-bold text-xs transition flex items-center space-x-2">
+                   class="h-11 px-4 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-slate-200 border border-white/10 font-bold text-xs transition flex items-center justify-center space-x-2"
+                   title="Manage Clients and Customers">
                     <i class="fa-solid fa-users text-blue-400 text-xs"></i>
                     <span>Clients</span>
                 </a>
@@ -178,12 +192,21 @@ foreach ($invoices as $inv) {
         </div>
 
         <!-- Controls: Live Search & View Switcher -->
-        <div class="flex items-center space-x-3 w-full md:w-auto">
-            <div class="relative flex-1 md:w-64">
+        <div class="flex items-center space-x-2.5 w-full md:w-auto">
+            <div class="relative flex-1 sm:w-72 lg:w-80">
                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input type="text" id="invoiceSearch" placeholder="Search #, client, company..." 
-                       class="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition">
+                <input type="text" id="invoiceSearch" placeholder="Search #, client, amount, status..." 
+                       class="w-full pl-9 pr-8 py-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition shadow-2xs">
+                <button type="button" id="clearInvoiceSearchBtn" onclick="clearInvoiceSearch()" 
+                        class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition p-1" title="Clear Search (Esc)">
+                    <i class="fa-solid fa-circle-xmark text-xs"></i>
+                </button>
             </div>
+
+            <!-- Live Match Counter Badge -->
+            <span id="invoiceMatchBadge" class="hidden px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 font-mono text-[11px] font-bold shrink-0">
+                0 matches
+            </span>
 
             <!-- Dual View Switcher -->
             <div class="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold shrink-0">
@@ -215,6 +238,23 @@ foreach ($invoices as $inv) {
                 </div>
             </div>
         <?php else: ?>
+            <!-- Search Zero Results Empty State (Cards) -->
+            <div id="invoiceSearchZeroCards" class="hidden col-span-full bg-white rounded-3xl p-10 text-center border border-slate-200 shadow-sm space-y-3">
+                <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 mx-auto flex items-center justify-center text-xl font-bold shadow-xs">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-900">No Matching Invoices Found</h4>
+                <p class="text-xs text-slate-500 max-w-sm mx-auto">
+                    No invoices found matching "<span id="searchZeroQueryCards" class="font-bold text-slate-800 font-mono"></span>". Try searching by invoice #, client name, amount, date, or status.
+                </p>
+                <div class="pt-2">
+                    <button type="button" onclick="clearInvoiceSearch()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition inline-flex items-center space-x-1.5">
+                        <i class="fa-solid fa-rotate-left text-xs"></i>
+                        <span>Reset Search Filter</span>
+                    </button>
+                </div>
+            </div>
+
             <?php foreach ($invoices as $inv): 
                 $status = strtolower($inv['status']);
                 $isPaid = ($status === 'paid');
@@ -226,9 +266,28 @@ foreach ($invoices as $inv) {
                 $company = $inv['client_company'] ?? '';
                 $publicPayUrl = app_url('/pay/' . ($inv['payment_token'] ?? $inv['id']));
                 $waText = urlencode("Hello, please find your tax invoice {$inv['invoice_number']} for " . format_cents($total) . ". You can view and pay online here: {$publicPayUrl}");
+                $searchKeywords = strtolower(implode(' ', array_filter([
+                    $inv['invoice_number'],
+                    $clientName,
+                    $company,
+                    $inv['client_email'] ?? $inv['customer_email'] ?? '',
+                    $inv['customer_phone'] ?? '',
+                    $inv['customer_gstin'] ?? '',
+                    $status,
+                    $isPaid ? 'paid settled complete' : '',
+                    $isOverdue ? 'overdue late unpaid' : '',
+                    ($status === 'open' && !$isOverdue) ? 'in-flight open pending due' : '',
+                    $isVoid ? 'void cancelled' : '',
+                    (string)round($total / 100),
+                    number_format($total / 100, 2, '.', ''),
+                    number_format($total / 100, 2),
+                    '₹' . number_format($total / 100, 2),
+                    date('d M Y', strtotime($inv['created_at'])),
+                    date('M Y', strtotime($inv['created_at'])),
+                ])));
             ?>
                 <div class="inv-card bg-white rounded-3xl p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between relative overflow-hidden group <?= $isVoid ? 'opacity-65' : '' ?>"
-                     data-search="<?= strtolower(e($inv['invoice_number'] . ' ' . $clientName . ' ' . $company)) ?>">
+                     data-search="<?= e($searchKeywords) ?>">
                     <!-- Top Status Band -->
                     <div class="h-1.5 w-full <?= $isPaid ? 'bg-emerald-500' : ($isVoid ? 'bg-slate-300' : ($isOverdue ? 'bg-rose-500' : 'bg-[#0C66E4]')) ?> absolute top-0 left-0"></div>
 
@@ -350,6 +409,21 @@ foreach ($invoices as $inv) {
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
+                    <!-- Search Zero Results Row (Table) -->
+                    <tr id="invoiceSearchZeroTable" class="hidden">
+                        <td colspan="6" class="px-6 py-12 text-center bg-white">
+                            <div class="space-y-2 max-w-xs mx-auto">
+                                <i class="fa-solid fa-magnifying-glass text-2xl text-slate-300 block"></i>
+                                <span class="text-xs font-bold text-slate-800 block">No Invoices Located</span>
+                                <p class="text-[11px] text-slate-400 block">No results match "<span id="searchZeroQueryTable" class="font-bold font-mono text-slate-600"></span>".</p>
+                                <button type="button" onclick="clearInvoiceSearch()" class="mt-2 px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition inline-flex items-center space-x-1">
+                                    <i class="fa-solid fa-rotate-left text-xs"></i>
+                                    <span>Clear Filter</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
                     <?php foreach ($invoices as $inv): 
                         $status = strtolower($inv['status']);
                         $isPaid = ($status === 'paid');
@@ -361,8 +435,27 @@ foreach ($invoices as $inv) {
                         $company = $inv['client_company'] ?? '';
                         $publicPayUrl = app_url('/pay/' . ($inv['payment_token'] ?? $inv['id']));
                         $waText = urlencode("Hello, please find your tax invoice {$inv['invoice_number']} for " . format_cents($total) . ". You can view and pay online here: {$publicPayUrl}");
+                        $searchKeywords = strtolower(implode(' ', array_filter([
+                            $inv['invoice_number'],
+                            $clientName,
+                            $company,
+                            $inv['client_email'] ?? $inv['customer_email'] ?? '',
+                            $inv['customer_phone'] ?? '',
+                            $inv['customer_gstin'] ?? '',
+                            $status,
+                            $isPaid ? 'paid settled complete' : '',
+                            $isOverdue ? 'overdue late unpaid' : '',
+                            ($status === 'open' && !$isOverdue) ? 'in-flight open pending due' : '',
+                            $isVoid ? 'void cancelled' : '',
+                            (string)round($total / 100),
+                            number_format($total / 100, 2, '.', ''),
+                            number_format($total / 100, 2),
+                            '₹' . number_format($total / 100, 2),
+                            date('d M Y', strtotime($inv['created_at'])),
+                            date('M Y', strtotime($inv['created_at'])),
+                        ])));
                     ?>
-                        <tr class="inv-row hover:bg-blue-50/20 transition <?= $isVoid ? 'opacity-60 bg-slate-50/50' : '' ?>" data-search="<?= strtolower(e($inv['invoice_number'] . ' ' . $clientName . ' ' . $company)) ?>">
+                        <tr class="inv-row hover:bg-blue-50/20 transition <?= $isVoid ? 'opacity-60 bg-slate-50/50' : '' ?>" data-search="<?= e($searchKeywords) ?>">
                             <td class="px-6 py-3.5 font-mono font-bold text-blue-600">
                                 <a href="<?= app_url('/invoices/' . $inv['id']) ?>" class="hover:underline flex items-center gap-1.5 <?= $isVoid ? 'line-through text-slate-400' : '' ?>">
                                     <span><?= e($inv['invoice_number']) ?></span>
@@ -476,20 +569,91 @@ function switchInvoiceMode(mode) {
     }
 }
 
-// Live Search for both Boarding Passes & Compact Ledger
-document.getElementById('invoiceSearch')?.addEventListener('input', function(e) {
-    const query = e.target.value.toLowerCase().trim();
-    
+// High-Precision Multi-Token Live Search Engine
+function clearInvoiceSearch() {
+    const input = document.getElementById('invoiceSearch');
+    if (!input) return;
+    input.value = '';
+    applyInvoiceFilter('');
+    input.focus();
+}
+
+function applyInvoiceFilter(rawQuery) {
+    const query = (rawQuery || '').toLowerCase().trim();
+    const clearBtn = document.getElementById('clearInvoiceSearchBtn');
+    const badge = document.getElementById('invoiceMatchBadge');
+    const zeroCards = document.getElementById('invoiceSearchZeroCards');
+    const zeroTable = document.getElementById('invoiceSearchZeroTable');
+    const zeroQueryCards = document.getElementById('searchZeroQueryCards');
+    const zeroQueryTable = document.getElementById('searchZeroQueryTable');
+
+    if (clearBtn) {
+        if (query.length > 0) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
+    }
+
+    const words = query.split(/\s+/).filter(Boolean);
+    let matchedCards = 0;
+    let matchedRows = 0;
+
     // Filter cards
     document.querySelectorAll('.inv-card').forEach(card => {
         const text = card.getAttribute('data-search') || '';
-        card.style.display = text.includes(query) ? '' : 'none';
+        const isMatch = words.length === 0 || words.every(w => text.includes(w));
+        card.style.display = isMatch ? '' : 'none';
+        if (isMatch) matchedCards++;
     });
 
     // Filter table rows
     document.querySelectorAll('.inv-row').forEach(row => {
         const text = row.getAttribute('data-search') || '';
-        row.style.display = text.includes(query) ? '' : 'none';
+        const isMatch = words.length === 0 || words.every(w => text.includes(w));
+        row.style.display = isMatch ? '' : 'none';
+        if (isMatch) matchedRows++;
     });
+
+    // Update match counter badge
+    if (badge) {
+        if (words.length > 0) {
+            badge.innerText = `${matchedCards} match${matchedCards === 1 ? '' : 'es'}`;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    // Handle zero results empty states
+    if (words.length > 0 && matchedCards === 0) {
+        if (zeroCards) {
+            zeroCards.classList.remove('hidden');
+            if (zeroQueryCards) zeroQueryCards.innerText = query;
+        }
+    } else {
+        if (zeroCards) zeroCards.classList.add('hidden');
+    }
+
+    if (words.length > 0 && matchedRows === 0) {
+        if (zeroTable) {
+            zeroTable.classList.remove('hidden');
+            if (zeroQueryTable) zeroQueryTable.innerText = query;
+        }
+    } else {
+        if (zeroTable) zeroTable.classList.add('hidden');
+    }
+}
+
+// Live Search Input Listener
+document.getElementById('invoiceSearch')?.addEventListener('input', function(e) {
+    applyInvoiceFilter(e.target.value);
+});
+
+// Escape key to reset search
+document.getElementById('invoiceSearch')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        clearInvoiceSearch();
+    }
 });
 </script>

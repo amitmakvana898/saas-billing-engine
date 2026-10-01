@@ -118,8 +118,12 @@ $gstPercentage = ($clientCount > 0) ? round(($gstCount / $clientCount) * 100) : 
         <!-- Live Instant Search -->
         <div class="relative flex-1 max-w-md">
             <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input type="text" id="clientSearch" placeholder="Search by name, company, email, or GSTIN..." 
-                   class="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition">
+            <input type="text" id="clientSearch" placeholder="Search by name, company, email, phone, city, or GSTIN..." 
+                   class="w-full pl-9 pr-8 py-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition shadow-2xs">
+            <button type="button" id="clearClientSearchBtn" onclick="clearClientSearch()" 
+                    class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition p-1" title="Clear Search (Esc)">
+                <i class="fa-solid fa-circle-xmark text-xs"></i>
+            </button>
         </div>
 
         <div class="flex items-center space-x-3 justify-between md:justify-end">
@@ -157,15 +161,43 @@ $gstPercentage = ($clientCount > 0) ? round(($gstCount / $clientCount) * 100) : 
                 </div>
             </div>
         <?php else: ?>
+            <!-- Search Zero Results Empty State (Cards) -->
+            <div id="clientSearchZeroCards" class="hidden col-span-full bg-white rounded-3xl p-10 text-center border border-slate-200 shadow-sm space-y-3">
+                <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 mx-auto flex items-center justify-center text-xl font-bold shadow-xs">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-900">No Clients Located</h4>
+                <p class="text-xs text-slate-500 max-w-sm mx-auto">
+                    No client profile matches "<span id="clientZeroQueryCards" class="font-bold text-slate-800 font-mono"></span>". Try searching by name, company, email, phone, city, or GSTIN.
+                </p>
+                <div class="pt-2">
+                    <button type="button" onclick="clearClientSearch()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition inline-flex items-center space-x-1.5">
+                        <i class="fa-solid fa-rotate-left text-xs"></i>
+                        <span>Reset Search</span>
+                    </button>
+                </div>
+            </div>
+
             <?php foreach ($customers as $c): 
                 $hasGstin = !empty($c['gstin']);
                 $cleanPhone = preg_replace('/[^0-9]/', '', $c['phone'] ?? '');
                 $paidCents = (int)($c['paid_cents'] ?? 0);
                 $dueCents = (int)($c['outstanding_cents'] ?? 0);
                 $initial = strtoupper(substr($c['name'] ?? 'C', 0, 1));
+                $clientSearchKeywords = strtolower(implode(' ', array_filter([
+                    $c['name'] ?? '',
+                    $c['company_name'] ?? '',
+                    $c['email'] ?? '',
+                    $c['phone'] ?? '',
+                    $c['gstin'] ?? '',
+                    $c['city'] ?? '',
+                    $c['state'] ?? '',
+                    $c['address'] ?? '',
+                    $hasGstin ? 'gst gstin verified' : 'unregistered individual',
+                ])));
             ?>
                 <div class="client-card bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between relative group"
-                     data-search="<?= strtolower(e($c['name'] . ' ' . ($c['company_name'] ?? '') . ' ' . $c['email'] . ' ' . ($c['gstin'] ?? ''))) ?>">
+                     data-search="<?= e($clientSearchKeywords) ?>">
                     <div class="space-y-4">
                         <!-- Card Top: Avatar & Action Pill -->
                         <div class="flex items-start justify-between gap-3">
@@ -290,13 +322,39 @@ $gstPercentage = ($clientCount > 0) ? round(($gstCount / $clientCount) * 100) : 
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
+                    <!-- Search Zero Results Row (Table) -->
+                    <tr id="clientSearchZeroTable" class="hidden">
+                        <td colspan="5" class="px-6 py-12 text-center bg-white">
+                            <div class="space-y-2 max-w-xs mx-auto">
+                                <i class="fa-solid fa-magnifying-glass text-2xl text-slate-300 block"></i>
+                                <span class="text-xs font-bold text-slate-800 block">No Clients Located</span>
+                                <p class="text-[11px] text-slate-400 block">No profiles match "<span id="clientZeroQueryTable" class="font-bold font-mono text-slate-600"></span>".</p>
+                                <button type="button" onclick="clearClientSearch()" class="mt-2 px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition inline-flex items-center space-x-1">
+                                    <i class="fa-solid fa-rotate-left text-xs"></i>
+                                    <span>Clear Filter</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
                     <?php foreach ($customers as $c): 
                         $hasGstin = !empty($c['gstin']);
                         $cleanPhone = preg_replace('/[^0-9]/', '', $c['phone'] ?? '');
                         $paidCents = (int)($c['paid_cents'] ?? 0);
                         $dueCents = (int)($c['outstanding_cents'] ?? 0);
+                        $clientSearchKeywords = strtolower(implode(' ', array_filter([
+                            $c['name'] ?? '',
+                            $c['company_name'] ?? '',
+                            $c['email'] ?? '',
+                            $c['phone'] ?? '',
+                            $c['gstin'] ?? '',
+                            $c['city'] ?? '',
+                            $c['state'] ?? '',
+                            $c['address'] ?? '',
+                            $hasGstin ? 'gst gstin verified' : 'unregistered individual',
+                        ])));
                     ?>
-                        <tr class="client-row hover:bg-blue-50/20 transition" data-search="<?= strtolower(e($c['name'] . ' ' . ($c['company_name'] ?? '') . ' ' . $c['email'] . ' ' . ($c['gstin'] ?? ''))) ?>">
+                        <tr class="client-row hover:bg-blue-50/20 transition" data-search="<?= e($clientSearchKeywords) ?>">
                             <td class="px-6 py-4">
                                 <div class="font-bold text-slate-900 text-sm"><?= e($c['name']) ?></div>
                                 <?php if (!empty($c['company_name'])): ?>
@@ -663,27 +721,82 @@ function switchClientMode(mode) {
     }
 }
 
-document.getElementById('clientSearch')?.addEventListener('input', function(e) {
-    const query = e.target.value.toLowerCase().trim();
-    let visible = 0;
+function clearClientSearch() {
+    const input = document.getElementById('clientSearch');
+    if (!input) return;
+    input.value = '';
+    applyClientFilter('');
+    input.focus();
+}
+
+function applyClientFilter(rawQuery) {
+    const query = (rawQuery || '').toLowerCase().trim();
+    const clearBtn = document.getElementById('clearClientSearchBtn');
+    const zeroCards = document.getElementById('clientSearchZeroCards');
+    const zeroTable = document.getElementById('clientSearchZeroTable');
+    const zeroQueryCards = document.getElementById('clientZeroQueryCards');
+    const zeroQueryTable = document.getElementById('clientZeroQueryTable');
+    const countDisplay = document.getElementById('clientCount');
+
+    if (clearBtn) {
+        if (query.length > 0) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
+    }
+
+    const words = query.split(/\s+/).filter(Boolean);
+    let visibleCards = 0;
+    let visibleRows = 0;
 
     // Filter Dossier Cards
     document.querySelectorAll('.client-card').forEach(card => {
         const text = card.getAttribute('data-search') || '';
-        if (text.includes(query)) {
-            card.style.display = '';
-            visible++;
-        } else {
-            card.style.display = 'none';
-        }
+        const isMatch = words.length === 0 || words.every(w => text.includes(w));
+        card.style.display = isMatch ? '' : 'none';
+        if (isMatch) visibleCards++;
     });
 
     // Filter Ledger Table
     document.querySelectorAll('.client-row').forEach(row => {
         const text = row.getAttribute('data-search') || '';
-        row.style.display = text.includes(query) ? '' : 'none';
+        const isMatch = words.length === 0 || words.every(w => text.includes(w));
+        row.style.display = isMatch ? '' : 'none';
+        if (isMatch) visibleRows++;
     });
 
-    document.getElementById('clientCount').innerText = visible;
+    if (countDisplay) {
+        countDisplay.innerText = visibleCards;
+    }
+
+    // Zero match empty states
+    if (words.length > 0 && visibleCards === 0) {
+        if (zeroCards) {
+            zeroCards.classList.remove('hidden');
+            if (zeroQueryCards) zeroQueryCards.innerText = query;
+        }
+    } else {
+        if (zeroCards) zeroCards.classList.add('hidden');
+    }
+
+    if (words.length > 0 && visibleRows === 0) {
+        if (zeroTable) {
+            zeroTable.classList.remove('hidden');
+            if (zeroQueryTable) zeroQueryTable.innerText = query;
+        }
+    } else {
+        if (zeroTable) zeroTable.classList.add('hidden');
+    }
+}
+
+document.getElementById('clientSearch')?.addEventListener('input', function(e) {
+    applyClientFilter(e.target.value);
+});
+
+document.getElementById('clientSearch')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        clearClientSearch();
+    }
 });
 </script>
