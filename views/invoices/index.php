@@ -84,6 +84,15 @@ foreach ($invoices as $inv) {
                         <i class="fa-solid fa-file-invoice-dollar text-emerald-400 text-xs"></i>
                         <span>GSTR-1 CA Export</span>
                     </a>
+
+                    <div class="w-px h-5 bg-white/10 mx-0.5"></div>
+
+                    <!-- Custom Filter / Date Range Export Modal Trigger -->
+                    <button type="button" onclick="openExportModal()"
+                            class="h-full px-2.5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white font-bold text-xs transition flex items-center space-x-1"
+                            title="Filter Export by Date Range or Status">
+                        <i class="fa-solid fa-sliders text-blue-400 text-xs"></i>
+                    </button>
                 </div>
 
                 <!-- Customer Vault Quick Link -->
@@ -665,4 +674,129 @@ document.getElementById('invoiceSearch')?.addEventListener('keydown', function(e
         clearInvoiceSearch();
     }
 });
+
+// Advanced Export Modal Handlers
+function openExportModal() {
+    document.getElementById('exportModal')?.classList.remove('hidden');
+}
+
+function closeExportModal() {
+    document.getElementById('exportModal')?.classList.add('hidden');
+}
+
+function setExportDates(preset) {
+    const today = new Date();
+    const fromInput = document.getElementById('exportFromDate');
+    const toInput = document.getElementById('exportToDate');
+
+    if (preset === 'all') {
+        fromInput.value = '';
+        toInput.value = '';
+    } else if (preset === 'this_month') {
+        const start = new Date(today.getFullYear(), today.getMonth(), 1);
+        fromInput.value = start.toISOString().split('T')[0];
+        toInput.value = today.toISOString().split('T')[0];
+    } else if (preset === 'last_month') {
+        const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const end = new Date(today.getFullYear(), today.getMonth(), 0);
+        fromInput.value = start.toISOString().split('T')[0];
+        toInput.value = end.toISOString().split('T')[0];
+    }
+}
+
+function triggerDownloadExport(type) {
+    const from = document.getElementById('exportFromDate')?.value || '';
+    const to = document.getElementById('exportToDate')?.value || '';
+    const status = document.getElementById('exportStatus')?.value || '';
+
+    const base = (type === 'gstr1') ? '<?= app_url('/invoices/gstr1-export') ?>' : '<?= app_url('/invoices/export') ?>';
+    const params = new URLSearchParams();
+    if (from) params.set('from_date', from);
+    if (to) params.set('to_date', to);
+    if (status) params.set('status', status);
+
+    const fullUrl = params.toString() ? `${base}?${params.toString()}` : base;
+    window.location.href = fullUrl;
+    closeExportModal();
+}
 </script>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     MODAL: ADVANCED DATE-RANGE EXPORT & TAX FILING
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="exportModal" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 sm:p-7 my-auto relative text-slate-800 animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base border border-emerald-100">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-slate-900">Export Ledger &amp; Tax Returns</h3>
+                    <p class="text-xs text-slate-400">Filter transactions by date range for accounting and GSTR-1 audits.</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeExportModal()" class="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="mt-5 space-y-4">
+            <!-- Preset Buttons -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Quick Date Range Presets</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="setExportDates('all')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition text-center">
+                        All Time
+                    </button>
+                    <button type="button" onclick="setExportDates('this_month')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition text-center">
+                        This Month
+                    </button>
+                    <button type="button" onclick="setExportDates('last_month')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition text-center">
+                        Last Month
+                    </button>
+                </div>
+            </div>
+
+            <!-- Date Range Inputs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">From Date</label>
+                    <input type="date" id="exportFromDate"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-semibold focus:bg-white focus:border-blue-600 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">To Date</label>
+                    <input type="date" id="exportToDate"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-semibold focus:bg-white focus:border-blue-600 outline-none transition">
+                </div>
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Invoice Status Filter</label>
+                <select id="exportStatus"
+                        class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-bold focus:bg-white focus:border-blue-600 outline-none transition">
+                    <option value="">All Statuses (Paid, Pending, Void)</option>
+                    <option value="paid">Settled / Paid Invoices Only</option>
+                    <option value="open">Pending / Open Invoices Only</option>
+                    <option value="void">Void / Cancelled Invoices Only</option>
+                </select>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button type="button" onclick="triggerDownloadExport('csv')"
+                        class="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-file-csv text-emerald-400"></i>
+                    <span>Export Standard CSV</span>
+                </button>
+                <button type="button" onclick="triggerDownloadExport('gstr1')"
+                        class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Export GSTR-1 Format</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

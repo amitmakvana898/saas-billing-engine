@@ -91,7 +91,11 @@
                             <i class="fa-solid fa-user-tag text-blue-600"></i>
                             <span>Billed To (Client / Customer) *</span>
                         </label>
-                        <span class="text-[11px] text-slate-400 font-medium">Select existing or enter new client</span>
+                        <button type="button" onclick="openQuickAddClientModal()" 
+                                class="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200 transition inline-flex items-center gap-1.5 shadow-2xs">
+                            <i class="fa-solid fa-user-plus text-[10px]"></i>
+                            <span>+ Quick Add Client</span>
+                        </button>
                     </div>
 
                     <!-- Client Select Dropdown -->
@@ -343,8 +347,172 @@
     </form>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════════════
+     MODAL: QUICK ADD CLIENT (INLINE AJAX FOR INVOICES)
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="quickAddClientModal" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 sm:p-7 my-auto relative text-slate-800">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base border border-blue-100">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-slate-900">Quick Add Client</h3>
+                    <p class="text-xs text-slate-400">Save client directly to CRM vault and auto-fill invoice.</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeQuickAddClientModal()" class="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form id="quickAddClientForm" onsubmit="handleQuickAddClientSubmit(event)" class="mt-5 space-y-4">
+            <input type="hidden" name="_csrf_token" value="<?= e($_SESSION['csrf_token'] ?? '') ?>">
+            <input type="hidden" name="_ajax" value="1">
+
+            <div id="quickAddError" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold"></div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Contact Name *</label>
+                    <input type="text" name="name" id="qa_name" required placeholder="Rajesh Patel"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-semibold focus:bg-white focus:border-blue-600 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Company Name</label>
+                    <input type="text" name="company_name" id="qa_company" placeholder="Acme Technologies"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-semibold focus:bg-white focus:border-blue-600 outline-none transition">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Work Email *</label>
+                    <input type="email" name="email" id="qa_email" required placeholder="client@company.com"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-semibold focus:bg-white focus:border-blue-600 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Phone / WhatsApp</label>
+                    <input type="text" name="phone" id="qa_phone" placeholder="+91 98200 12345"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-semibold focus:bg-white focus:border-blue-600 outline-none transition">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Client GSTIN (15 Digits)</label>
+                    <input type="text" name="gstin" id="qa_gstin" maxlength="15" placeholder="24AAACT0000A1Z5"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-mono font-bold uppercase focus:bg-white focus:border-blue-600 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">State / UT</label>
+                    <input type="text" name="state" id="qa_state" placeholder="Gujarat"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-medium focus:bg-white focus:border-blue-600 outline-none transition">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Billing Address</label>
+                <input type="text" name="address" id="qa_address" placeholder="Tower B, Corporate Park, City"
+                       class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-medium focus:bg-white focus:border-blue-600 outline-none transition">
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+                <button type="button" onclick="closeQuickAddClientModal()"
+                        class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                    Cancel
+                </button>
+                <button type="submit" id="qa_submit_btn"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-md shadow-blue-500/20 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Save &amp; Select Client</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 let rowCount = 1;
+
+function openQuickAddClientModal() {
+    document.getElementById('quickAddError').classList.add('hidden');
+    document.getElementById('quickAddError').innerText = '';
+    document.getElementById('quickAddClientModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('qa_name')?.focus(), 50);
+}
+
+function closeQuickAddClientModal() {
+    document.getElementById('quickAddClientModal').classList.add('hidden');
+    document.getElementById('quickAddClientForm').reset();
+}
+
+async function handleQuickAddClientSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const btn = document.getElementById('qa_submit_btn');
+    const errBox = document.getElementById('quickAddError');
+    errBox.classList.add('hidden');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Saving...</span>';
+
+    try {
+        const formData = new FormData(form);
+        const res = await fetch('<?= app_url('/customers') ?>', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to register client');
+        }
+
+        const cust = data.customer;
+        const select = document.getElementById('customerSelect');
+        const opt = document.createElement('option');
+        opt.value = cust.id;
+        opt.setAttribute('data-name', cust.name || '');
+        opt.setAttribute('data-email', cust.email || '');
+        opt.setAttribute('data-phone', cust.phone || '');
+        opt.setAttribute('data-company', cust.company_name || '');
+        opt.setAttribute('data-gstin', cust.gstin || '');
+        opt.setAttribute('data-address', cust.address || '');
+        opt.textContent = `${cust.name} ${cust.company_name ? '(' + cust.company_name + ')' : ''} • ${cust.email}`;
+        select.appendChild(opt);
+        select.value = cust.id;
+
+        // Auto-fill invoice form
+        document.getElementById('custName').value = cust.name || '';
+        document.getElementById('custCompany').value = cust.company_name || '';
+        document.getElementById('custEmail').value = cust.email || '';
+        document.getElementById('custPhone').value = cust.phone || '';
+        document.getElementById('custGstin').value = cust.gstin || '';
+        document.getElementById('custAddress').value = cust.address || '';
+        document.getElementById('saveCust').checked = false;
+
+        calculateTotals();
+        closeQuickAddClientModal();
+
+        // Show toast confirmation
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-5 right-5 z-50 bg-emerald-600 text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center space-x-2 transition transform duration-300';
+        toast.innerHTML = `<i class="fa-solid fa-circle-check text-sm"></i> <span>Client "${cust.name}" registered & auto-filled!</span>`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+
+    } catch (err) {
+        errBox.innerText = err.message;
+        errBox.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Save &amp; Select Client</span>';
+    }
+}
 
 // Client Selector Auto-fill
 document.getElementById('customerSelect')?.addEventListener('change', function(e) {

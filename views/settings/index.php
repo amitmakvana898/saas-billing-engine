@@ -55,7 +55,7 @@ $flash_error   = flash('error');
             </div>
 
             <?php if (can_manage_team()): ?>
-                <form action="<?= app_url('/settings/company') ?>" method="POST" class="mt-6 space-y-4">
+                <form action="<?= app_url('/settings/company') ?>" method="POST" enctype="multipart/form-data" class="mt-6 space-y-4">
                     <?= csrf_field() ?>
 
                     <div>
@@ -85,17 +85,30 @@ $flash_error   = flash('error');
                         </div>
                     </div>
 
-                    <!-- Company Logo URL -->
+                    <!-- Company Logo Upload & URL -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Company Logo URL (PNG/JPG/SVG)</label>
-                        <div class="flex items-center space-x-3">
-                            <input type="url" name="logo_url" id="logoUrlInput" value="<?= e($tenant['logo_url'] ?? '') ?>" placeholder="https://example.com/logo.png"
-                                class="flex-1 px-4 py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition outline-none">
-                            <?php if (!empty($tenant['logo_url'])): ?>
-                                <img src="<?= e($tenant['logo_url']) ?>" alt="Logo Preview" class="h-9 w-9 object-contain rounded-lg border border-slate-200 bg-white p-1">
-                            <?php endif; ?>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Company Brand Logo</label>
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                                <div class="flex-1">
+                                    <span class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Option 1: Upload Image File</span>
+                                    <input type="file" name="logo_file" accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                                           class="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition cursor-pointer">
+                                </div>
+                                <div class="hidden sm:block text-slate-300 font-bold text-xs uppercase self-center pt-3">OR</div>
+                                <div class="flex-1">
+                                    <span class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Option 2: Direct Image URL</span>
+                                    <input type="url" name="logo_url" id="logoUrlInput" value="<?= e($tenant['logo_url'] ?? '') ?>" placeholder="https://example.com/logo.png"
+                                           class="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition outline-none">
+                                </div>
+                                <?php if (!empty($tenant['logo_url'])): ?>
+                                    <div class="shrink-0 self-center">
+                                        <img src="<?= e($tenant['logo_url']) ?>" alt="Logo Preview" class="h-10 w-10 object-contain rounded-lg border border-slate-200 bg-white p-1 shadow-2xs">
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                        <p class="text-[11px] text-slate-400 mt-1">Appears on the header of all your client invoices and checkout portal.</p>
+                        <p class="text-[11px] text-slate-400 mt-1">PNG, JPG, SVG, or WebP. Printed automatically on all your client invoices, receipts, and checkout portals.</p>
                     </div>
 
                     <!-- Direct Settlement Banking Details -->

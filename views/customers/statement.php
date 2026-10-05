@@ -31,6 +31,16 @@
             </div>
 
             <div class="flex items-center space-x-2">
+                <?php
+                $cleanPhone = preg_replace('/[^0-9]/', '', $customer['phone'] ?? '');
+                $statementShareUrl = app_url('/statement/' . $customer['id']);
+                $shareWaMsg = urlencode("Hello " . ($customer['name'] ?? 'Client') . ",\nHere is your official account ledger statement from " . ($tenant['name'] ?? 'SaaSify') . ".\nTotal Outstanding Due: " . format_cents($totalOutstanding) . "\nView Ledger Statement: " . $statementShareUrl);
+                $shareWaLink = !empty($cleanPhone) ? "https://wa.me/{$cleanPhone}?text={$shareWaMsg}" : "https://api.whatsapp.com/send?text={$shareWaMsg}";
+                ?>
+                <a href="<?= $shareWaLink ?>" target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center space-x-1.5" title="Share Ledger Statement on WhatsApp">
+                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                    <span>Share on WhatsApp</span>
+                </a>
                 <button onclick="window.print()" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition shadow-xs flex items-center space-x-1.5">
                     <i class="fa-solid fa-print text-slate-500"></i>
                     <span>Print Statement</span>

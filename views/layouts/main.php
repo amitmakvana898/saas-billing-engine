@@ -41,102 +41,29 @@
         }
 
         /* ═══════════════════════════════════════════════════════
-           ADAPTIVE SCROLL-MORPHING SMALL CIRCLE DOCK PHYSICS
+           PERMANENT STICKY DYNAMIC ISLAND (ALWAYS FULLY VISIBLE)
            ═══════════════════════════════════════════════════════ */
         #floatingDynamicIsland {
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        /* Normal State: Center Island */
-        #floatingDynamicIsland:not(.is-docked) {
+            transition: all 0.25s ease;
             max-width: 82rem;
             width: calc(100% - 1.5rem);
         }
 
-        /* Docked to Top-Right Corner when Scrolled */
-        #floatingDynamicIsland.is-docked {
-            right: 1rem;
-            left: auto;
-            margin: 0;
-            padding: 0;
-            max-width: max-content;
-            transform: none;
-        }
-        @media (min-width: 640px) {
-            #floatingDynamicIsland.is-docked {
-                right: 1.5rem;
-            }
-        }
-
         #islandInner {
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.25s ease;
         }
 
-        /* ─── PURE SMALL CIRCLE STATE (when scrolled and not expanded) ─── */
-        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandInner {
-            width: 3rem !important;      /* Exactly 48px by 48px circle */
-            height: 3rem !important;
-            min-width: 3rem !important;
-            padding: 0 !important;
-            border-radius: 9999px !important;
-            justify-content: center !important;
-            align-items: center !important;
-            cursor: pointer !important;
-            background: linear-gradient(135deg, #2563EB, #4F46E5, #7C3AED) !important;
-            border: 2px solid rgba(255, 255, 255, 0.35) !important;
-            box-shadow: 0 10px 25px -3px rgba(37, 99, 235, 0.6), 0 0 20px rgba(99, 102, 241, 0.4) !important;
-            position: relative;
+        /* When scrolled, add deeper shadow and sleek glassmorphism border */
+        #floatingDynamicIsland.is-scrolled #islandInner {
+            background: rgba(11, 15, 25, 0.98) !important;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 25px rgba(59, 130, 246, 0.25) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
         }
 
-        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandInner:hover {
-            transform: scale(1.1);
-            box-shadow: 0 14px 30px -3px rgba(37, 99, 235, 0.75), 0 0 25px rgba(99, 102, 241, 0.55) !important;
-        }
-
-        /* Hide all regular contents when collapsed in small circle */
-        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandBrandLeft,
-        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandNavLinks,
-        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandActions {
-            display: none !important;
-        }
-
-        /* Show the Small Circle Orb Trigger */
-        #floatingDynamicIsland.is-docked:not(.is-expanded) #islandCircleOrb {
-            display: flex !important;
-        }
-
-        /* Hide Small Circle Orb Trigger when at top or when expanded */
-        #floatingDynamicIsland:not(.is-docked) #islandCircleOrb,
-        #floatingDynamicIsland.is-expanded #islandCircleOrb {
-            display: none !important;
-        }
-
-        /* ─── EXPANDED STATE (When hovered/tapped while scrolled) ─── */
-        #floatingDynamicIsland.is-docked.is-expanded {
-            max-width: 82rem;
-            right: 1rem;
-        }
-        @media (min-width: 640px) {
-            #floatingDynamicIsland.is-docked.is-expanded {
-                right: 1.5rem;
-            }
-        }
-
-        #floatingDynamicIsland.is-docked.is-expanded #islandInner {
-            width: auto !important;
-            height: auto !important;
-            border-radius: 9999px !important;
-            padding: 0.5rem 1rem !important;
-            background: rgba(11, 15, 25, 0.96) !important;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.65), 0 0 35px rgba(59,130,246,0.35) !important;
-        }
-
-        /* Close button visible only when expanded in docked state */
+        /* Circle orb and dock close button are disabled so menu never collapses */
+        #islandCircleOrb,
         #islandDockCloseBtn {
-            display: none;
-        }
-        #floatingDynamicIsland.is-docked.is-expanded #islandDockCloseBtn {
-            display: flex !important;
+            display: none !important;
         }
     </style>
 </head>
@@ -610,60 +537,12 @@
     const circleOrb = document.getElementById('islandCircleOrb');
     const closeBtn = document.getElementById('islandDockCloseBtn');
     let isHovered = false;
-    let hoverTimeout = null;
-
-    // Hover on the island container (Unfolds on hover)
-    island?.addEventListener('mouseenter', () => {
-        if (hoverTimeout) clearTimeout(hoverTimeout);
-        isHovered = true;
-        if (island.classList.contains('is-docked')) {
-            island.classList.add('is-expanded');
-        }
-    });
-
-    // Mouse leave smoothly collapses back into circle after a slight grace delay
-    island?.addEventListener('mouseleave', () => {
-        isHovered = false;
-        if (island.classList.contains('is-docked')) {
-            hoverTimeout = setTimeout(() => {
-                if (!isHovered && island.classList.contains('is-docked')) {
-                    island.classList.remove('is-expanded');
-                }
-            }, 300);
-        }
-    });
-
-    // Clicking the small circle orb toggles full expansion
-    circleOrb?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        island.classList.toggle('is-expanded');
-    });
-
-    // Explicit close button collapses back to small circle
-    closeBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        island.classList.remove('is-expanded');
-    });
-
-    // Clicking outside when expanded collapses it back to circle
-    document.addEventListener('click', (e) => {
-        if (island && island.classList.contains('is-docked') && island.classList.contains('is-expanded')) {
-            if (!island.contains(e.target)) {
-                island.classList.remove('is-expanded');
-            }
-        }
-    });
-
-    // Scroll Listener: Morph into small circle when scrolling down
+    // Scroll Listener: Add sleek glassmorphism depth shadow when scrolled
     window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            island.classList.add('is-docked');
-            if (!isHovered) {
-                island.classList.remove('is-expanded');
-            }
+        if (window.scrollY > 20) {
+            island?.classList.add('is-scrolled');
         } else {
-            // Returned to top: restore full center Dynamic Island
-            island.classList.remove('is-docked', 'is-expanded');
+            island?.classList.remove('is-scrolled');
         }
     }, { passive: true });
 

@@ -159,9 +159,31 @@ class InvoiceController
         $tenant = current_tenant();
         $tenantRepo = new TenantRepository();
         $freshTenant = $tenantRepo->findById($tenant['id']) ?? $tenant;
+
+        $fromDate = $request ? trim($request->query('from_date') ?? '') : '';
+        $toDate = $request ? trim($request->query('to_date') ?? '') : '';
+        $statusFilter = $request ? trim($request->query('status') ?? '') : '';
+
         $invoices = $this->invoiceService->getTenantInvoices($tenant['id']);
 
-        $filename = 'invoices_' . ($freshTenant['subdomain'] ?? 'export') . '_' . date('Y-m-d') . '.csv';
+        if (!empty($fromDate) || !empty($toDate) || !empty($statusFilter)) {
+            $invoices = array_filter($invoices, function ($inv) use ($fromDate, $toDate, $statusFilter) {
+                $invDate = date('Y-m-d', strtotime($inv['created_at']));
+                if (!empty($fromDate) && $invDate < $fromDate) {
+                    return false;
+                }
+                if (!empty($toDate) && $invDate > $toDate) {
+                    return false;
+                }
+                if (!empty($statusFilter) && strtolower($inv['status']) !== strtolower($statusFilter)) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        $dateSuffix = (!empty($fromDate) && !empty($toDate)) ? "_{$fromDate}_to_{$toDate}" : '_' . date('Y-m-d');
+        $filename = 'invoices_' . ($freshTenant['subdomain'] ?? 'export') . $dateSuffix . '.csv';
 
         $stream = fopen('php://temp', 'r+');
         fputs($stream, "\xEF\xBB\xBF"); // UTF-8 BOM
@@ -217,9 +239,31 @@ class InvoiceController
         $tenant = current_tenant();
         $tenantRepo = new TenantRepository();
         $freshTenant = $tenantRepo->findById($tenant['id']) ?? $tenant;
+
+        $fromDate = $request ? trim($request->query('from_date') ?? '') : '';
+        $toDate = $request ? trim($request->query('to_date') ?? '') : '';
+        $statusFilter = $request ? trim($request->query('status') ?? '') : '';
+
         $invoices = $this->invoiceService->getTenantInvoices($tenant['id']);
 
-        $filename = 'GSTR1_B2B_Report_' . ($freshTenant['subdomain'] ?? 'tax') . '_' . date('Y-m') . '.csv';
+        if (!empty($fromDate) || !empty($toDate) || !empty($statusFilter)) {
+            $invoices = array_filter($invoices, function ($inv) use ($fromDate, $toDate, $statusFilter) {
+                $invDate = date('Y-m-d', strtotime($inv['created_at']));
+                if (!empty($fromDate) && $invDate < $fromDate) {
+                    return false;
+                }
+                if (!empty($toDate) && $invDate > $toDate) {
+                    return false;
+                }
+                if (!empty($statusFilter) && strtolower($inv['status']) !== strtolower($statusFilter)) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        $dateSuffix = (!empty($fromDate) && !empty($toDate)) ? "_{$fromDate}_to_{$toDate}" : '_' . date('Y-m');
+        $filename = 'GSTR1_B2B_Report_' . ($freshTenant['subdomain'] ?? 'tax') . $dateSuffix . '.csv';
 
         $stream = fopen('php://temp', 'r+');
         fputs($stream, "\xEF\xBB\xBF"); // UTF-8 BOM

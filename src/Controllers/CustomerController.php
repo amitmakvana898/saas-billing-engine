@@ -48,17 +48,31 @@ class CustomerController
         $state = trim($request->input('state') ?? '');
         $pincode = trim($request->input('pincode') ?? '');
 
+        $isAjax = ($request->input('_ajax') == '1')
+            || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+            || (strpos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false)
+            || ($request->query('format') === 'json');
+
         if (empty($name) || empty($email)) {
+            if ($isAjax) {
+                return Response::json(['success' => false, 'error' => 'Client Name and Contact Email are required.'], 422);
+            }
             flash('error', 'Client Name and Contact Email are required.');
             return redirect('/customers');
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            if ($isAjax) {
+                return Response::json(['success' => false, 'error' => 'Please enter a valid client contact email address.'], 422);
+            }
             flash('error', 'Please enter a valid client contact email address.');
             return redirect('/customers');
         }
 
         if (!empty($gstin) && !preg_match('/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/', $gstin)) {
+            if ($isAjax) {
+                return Response::json(['success' => false, 'error' => 'Invalid GSTIN format. Must be a valid 15-character alphanumeric GSTIN (e.g., 24AAACT0000A1Z5).'], 422);
+            }
             flash('error', 'Invalid GSTIN format. Must be a valid 15-character alphanumeric GSTIN (e.g., 24AAACT0000A1Z5).');
             return redirect('/customers');
         }
@@ -83,6 +97,26 @@ class CustomerController
             'customer.created',
             "Added client '{$name}' (" . ($company ?: 'Individual') . ")"
         );
+
+        if ($isAjax) {
+            $createdCustomer = $this->customerRepo->findById($id, $tenant['id']);
+            return Response::json([
+                'success' => true,
+                'message' => "Client '{$name}' registered successfully!",
+                'customer' => $createdCustomer ?: [
+                    'id' => $id,
+                    'name' => $name,
+                    'email' => $email,
+                    'phone' => $phone,
+                    'company_name' => $company,
+                    'gstin' => $gstin,
+                    'address' => $address,
+                    'city' => $city,
+                    'state' => $state,
+                    'pincode' => $pincode,
+                ]
+            ], 201);
+        }
 
         flash('success', "Client '{$name}' has been successfully registered!");
         return redirect('/customers');

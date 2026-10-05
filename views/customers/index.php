@@ -288,8 +288,18 @@ $gstPercentage = ($clientCount > 0) ? round(($gstCount / $clientCount) * 100) : 
                         </span>
 
                         <div class="flex items-center space-x-1.5">
-                            <a href="<?= app_url('/statement/' . $c['id']) ?>" target="_blank"
-                               class="p-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition" title="View Public Statement &amp; Ledger">
+                            <?php
+                            $statementUrl = app_url('/statement/' . $c['id']);
+                            $tenantName = $tenant['name'] ?? 'SaaSify';
+                            $statementWaText = urlencode("Hello " . ($c['name'] ?? 'Client') . ",\nHere is your official account ledger statement from " . $tenantName . ".\nTotal Invoiced: " . format_cents($paidCents + $dueCents) . "\nPending Due: " . format_cents($dueCents) . "\nView full ledger statement: " . $statementUrl);
+                            $statementWaLink = !empty($cleanPhone) ? "https://wa.me/{$cleanPhone}?text={$statementWaText}" : "https://api.whatsapp.com/send?text={$statementWaText}";
+                            ?>
+                            <a href="<?= $statementWaLink ?>" target="_blank"
+                               class="p-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition" title="Share Ledger Statement on WhatsApp">
+                                <i class="fa-brands fa-whatsapp text-xs"></i>
+                            </a>
+                            <a href="<?= $statementUrl ?>" target="_blank"
+                               class="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition" title="View Public Statement &amp; Ledger">
                                 <i class="fa-solid fa-file-invoice text-xs"></i>
                             </a>
                             <button type="button" 
@@ -400,8 +410,18 @@ $gstPercentage = ($clientCount > 0) ? round(($gstCount / $clientCount) * 100) : 
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end space-x-2">
-                                    <a href="<?= app_url('/statement/' . $c['id']) ?>" target="_blank"
-                                       class="p-1.5 text-slate-500 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition" title="View Public Statement & Ledger">
+                                    <?php
+                                    $statementUrl = app_url('/statement/' . $c['id']);
+                                    $tenantName = $tenant['name'] ?? 'SaaSify';
+                                    $statementWaText = urlencode("Hello " . ($c['name'] ?? 'Client') . ",\nHere is your official account ledger statement from " . $tenantName . ".\nTotal Invoiced: " . format_cents($paidCents + $dueCents) . "\nPending Due: " . format_cents($dueCents) . "\nView full ledger statement: " . $statementUrl);
+                                    $statementWaLink = !empty($cleanPhone) ? "https://wa.me/{$cleanPhone}?text={$statementWaText}" : "https://api.whatsapp.com/send?text={$statementWaText}";
+                                    ?>
+                                    <a href="<?= $statementWaLink ?>" target="_blank"
+                                       class="p-1.5 text-slate-500 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition" title="Share Ledger Statement on WhatsApp">
+                                        <i class="fa-brands fa-whatsapp text-xs"></i>
+                                    </a>
+                                    <a href="<?= $statementUrl ?>" target="_blank"
+                                       class="p-1.5 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition" title="View Public Statement & Ledger">
                                         <i class="fa-solid fa-file-invoice text-xs"></i>
                                     </a>
                                     <a href="<?= app_url('/invoices/create?customer_id=' . $c['id']) ?>" 

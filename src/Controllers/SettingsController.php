@@ -55,6 +55,33 @@ class SettingsController
         $billingAddress = trim($request->input('billing_address') ?? '');
         $phone = trim($request->input('phone') ?? '');
         $logoUrl = trim($request->input('logo_url') ?? '');
+
+        // Handle direct file upload for company brand logo
+        if (!empty($_FILES['logo_file']) && $_FILES['logo_file']['error'] === UPLOAD_ERR_OK) {
+            $tmpPath = $_FILES['logo_file']['tmp_name'];
+            $origName = $_FILES['logo_file']['name'];
+            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+            $allowedExts = ['png', 'jpg', 'jpeg', 'svg', 'webp'];
+
+            if (in_array($ext, $allowedExts, true) && filesize($tmpPath) <= 2 * 1024 * 1024) {
+                $uploadDir = __DIR__ . '/../../public/uploads/logos';
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0777, true);
+                }
+                $safeName = 'logo_' . substr(md5($tenantId), 0, 10) . '_' . time() . '.' . $ext;
+                $destPath = $uploadDir . '/' . $safeName;
+                if (move_uploaded_file($tmpPath, $destPath)) {
+                    $logoUrl = app_url('/uploads/logos/' . $safeName);
+                }
+            }
+        }
+
+        // If no new logo file and no new logo URL entered, retain existing
+        if (empty($logoUrl)) {
+            $existingTenant = $this->tenantRepo->findById($tenantId);
+            $logoUrl = $existingTenant['logo_url'] ?? '';
+        }
+
         $bankName = trim($request->input('bank_name') ?? '');
         $bankAccountNo = trim($request->input('bank_account_no') ?? '');
         $bankIfsc = strtoupper(trim($request->input('bank_ifsc') ?? ''));
