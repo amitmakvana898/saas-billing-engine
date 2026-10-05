@@ -34,6 +34,11 @@ class SubscriptionController
 
     public function upgrade(Request $request): Response
     {
+        if (!can_manage_billing()) {
+            flash('error', 'Unauthorized. Only Workspace Owners, Admins, and Billing Managers can upgrade subscription plans.');
+            return redirect('/plans');
+        }
+
         $tenant = current_tenant();
         $planId = (int)$request->input('plan_id');
 
@@ -53,6 +58,11 @@ class SubscriptionController
 
     public function cancel(Request $request): Response
     {
+        if (!can_manage_billing()) {
+            flash('error', 'Unauthorized. Only Workspace Owners, Admins, and Billing Managers can cancel subscription plans.');
+            return redirect('/plans');
+        }
+
         $tenant = current_tenant();
         $this->subService->cancelSubscription($tenant['id']);
         audit_log('subscription_canceled', 'Cancelled subscription effective at end of current period');
@@ -63,6 +73,11 @@ class SubscriptionController
 
     public function runRecurringBilling(Request $request): Response
     {
+        if (!can_manage_billing()) {
+            flash('error', 'Unauthorized. Only Workspace Owners, Admins, and Billing Managers can trigger recurring billing.');
+            return redirect('/invoices');
+        }
+
         $tenant = current_tenant();
         try {
             $invoices = $this->subService->processRecurringBilling($tenant['id']);

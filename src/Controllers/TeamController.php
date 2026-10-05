@@ -54,6 +54,11 @@ class TeamController
 
     public function invite(Request $request): Response
     {
+        if (!can_manage_team()) {
+            flash('error', 'Unauthorized. Only Workspace Owners and Admins can invite team members.');
+            return redirect('/team');
+        }
+
         $tenant = current_tenant();
         $name = trim($request->input('name') ?? '');
         $email = strtolower(trim($request->input('email') ?? ''));
@@ -103,6 +108,11 @@ class TeamController
 
     public function delete(Request $request, string $id): Response
     {
+        if (!can_manage_team()) {
+            flash('error', 'Unauthorized. Only Workspace Owners and Admins can remove team members.');
+            return redirect('/team');
+        }
+
         $tenant = current_tenant();
         $currentUser = auth_user();
 
