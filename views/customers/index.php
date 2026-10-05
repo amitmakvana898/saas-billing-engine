@@ -288,6 +288,10 @@ $gstPercentage = ($clientCount > 0) ? round(($gstCount / $clientCount) * 100) : 
                         </span>
 
                         <div class="flex items-center space-x-1.5">
+                            <a href="<?= app_url('/statement/' . $c['id']) ?>" target="_blank"
+                               class="p-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition" title="View Public Statement &amp; Ledger">
+                                <i class="fa-solid fa-file-invoice text-xs"></i>
+                            </a>
                             <button type="button" 
                                     onclick="openEditModal(<?= htmlspecialchars(json_encode($c), ENT_QUOTES, 'UTF-8') ?>)"
                                     class="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition" title="Edit Client Profile">
@@ -396,6 +400,10 @@ $gstPercentage = ($clientCount > 0) ? round(($gstCount / $clientCount) * 100) : 
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end space-x-2">
+                                    <a href="<?= app_url('/statement/' . $c['id']) ?>" target="_blank"
+                                       class="p-1.5 text-slate-500 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition" title="View Public Statement & Ledger">
+                                        <i class="fa-solid fa-file-invoice text-xs"></i>
+                                    </a>
                                     <a href="<?= app_url('/invoices/create?customer_id=' . $c['id']) ?>" 
                                        class="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition" title="Bill Client">
                                         <i class="fa-solid fa-plus text-[10px]"></i>

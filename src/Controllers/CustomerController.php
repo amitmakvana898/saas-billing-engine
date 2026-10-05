@@ -306,4 +306,68 @@ class CustomerController
         flash('success', "Import completed: {$imported} clients successfully registered! ({$skipped} duplicates/invalid rows skipped).");
         return redirect('/customers');
     }
+
+    public function publicStatement(Request $request, string $id): Response
+    {
+        $pdo = \App\Core\Database::getConnection();
+
+        // Find customer
+        $stmt = $pdo->prepare('SELECT * FROM `customers` WHERE `id` = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
+        $customer = $stmt->fetch();
+
+        if (!$customer) {
+            return Response::html('<div style="text-align:center;padding:50px;font-family:sans-serif;"><h2>Customer record not found</h2><p>The requested client statement portal link is invalid or expired.</p></div>', 404);
+        }
+
+        // Find tenant organization
+        $tenantStmt = $pdo->prepare('SELECT * FROM `tenants` WHERE `id` = :tid LIMIT 1');
+        $tenantStmt->execute(['tid' => $customer['tenant_id']]);
+        $tenant = $tenantStmt->fetch();
+
+        // Find all invoices for this customer
+        $invStmt = $pdo->prepare('SELECT * FROM `invoices` WHERE `customer_id` = :cid ORDER BY `created_at` DESC');
+        $invStmt->execute(['cid' => $id]);
+        $invoices = $invStmt->fetchAll();
+
+        // Calculate metrics
+        $totalInvoiced = 0;
+        $totalPaid = 0;
+        $totalOutstanding = 0;
+        $countPaid = 0;
+        $countOpen = 0;
+        $countOverdue = 0;
+
+        foreach ($invoices as $inv) {
+            $amt = (int)$inv['total_cents'];
+            $paidAmt = (int)$inv['amount_paid_cents'];
+            $status = strtolower($inv['status']);
+
+            $totalInvoiced += $amt;
+            $totalPaid += $paidAmt;
+
+            if ($status === 'paid') {
+                $countPaid++;
+            } elseif ($status === 'open') {
+                $countOpen++;
+                $totalOutstanding += max(0, $amt - $paidAmt);
+                if (!empty($inv['due_date']) && strtotime($inv['due_date']) < strtotime('today')) {
+                    $countOverdue++;
+                }
+            }
+        }
+
+        return view('customers.statement', [
+            'title' => 'Client Statement & Billing Ledger - ' . $customer['name'],
+            'customer' => $customer,
+            'tenant' => $tenant,
+            'invoices' => $invoices,
+            'totalInvoiced' => $totalInvoiced,
+            'totalPaid' => $totalPaid,
+            'totalOutstanding' => $totalOutstanding,
+            'countPaid' => $countPaid,
+            'countOpen' => $countOpen,
+            'countOverdue' => $countOverdue,
+        ], null);
+    }
 }

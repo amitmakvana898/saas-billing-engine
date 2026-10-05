@@ -27,7 +27,21 @@ $items = json_decode($invoice['items_json'] ?? '[]', true) ?: [];
 $totalCents = (int)($invoice['total_cents'] ?? ($invoice['subtotal_cents'] + $invoice['tax_cents']));
 $publicPayUrl = app_url('/pay/' . ($invoice['payment_token'] ?? $invoice['id']));
 $clientName = $invoice['cust_name'] ?? $invoice['customer_name'] ?? 'Direct Client';
-$waText = urlencode("Hello {$clientName}, please find your tax invoice {$invoice['invoice_number']} for " . format_cents($totalCents) . ". You can view details and pay online here: {$publicPayUrl}");
+$clientPhone = $invoice['cust_phone'] ?? $invoice['customer_phone'] ?? '';
+$cleanPhone = preg_replace('/[^0-9]/', '', $clientPhone);
+if (!empty($cleanPhone) && strlen($cleanPhone) === 10) {
+    $cleanPhone = '91' . $cleanPhone;
+}
+$waText = urlencode("Hello {$clientName}, please find your official tax invoice {$invoice['invoice_number']} for " . format_cents($totalCents) . " from {$tenant['name']}. You can review your invoice breakdown and settle securely online here: {$publicPayUrl}");
+$waDirectUrl = !empty($cleanPhone) 
+    ? "https://wa.me/{$cleanPhone}?text={$waText}" 
+    : "https://api.whatsapp.com/send?text={$waText}";
+
+$upiVpa = !empty($tenant['upi_id']) ? $tenant['upi_id'] : 'billing@saasify.app';
+$payAmountRupees = number_format($totalCents / 100, 2, '.', '');
+$payeeName = urlencode($tenant['name'] ?? 'SaaSify Organization');
+$upiUri = "upi://pay?pa={$upiVpa}&pn={$payeeName}&am={$payAmountRupees}&cu=INR&tn=" . urlencode($invoice['invoice_number']);
+$qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($upiUri);
 
 $tenantGstin = $tenant['tax_id'] ?? $invoice['tenant_gstin'] ?? '';
 $custGstin = $invoice['cust_gstin'] ?? $invoice['customer_gstin'] ?? '';
@@ -81,9 +95,10 @@ $isInterstate = (!empty($tenantState) && !empty($custState) && $tenantState !== 
                     <span>Copy Link</span>
                 </button>
 
-                <!-- Share WhatsApp -->
-                <a href="https://api.whatsapp.com/send?text=<?= $waText ?>" target="_blank" 
-                   class="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold hover:bg-emerald-100 shadow-xs transition">
+                <!-- Share WhatsApp Direct -->
+                <a href="<?= $waDirectUrl ?>" target="_blank" 
+                   class="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold hover:bg-emerald-100 shadow-xs transition"
+                   title="Dispatch directly to <?= !empty($clientPhone) ? e($clientPhone) : 'Client WhatsApp' ?>">
                     <i class="fa-brands fa-whatsapp text-emerald-600 text-sm"></i>
                     <span>WhatsApp</span>
                 </a>
@@ -313,21 +328,45 @@ $isInterstate = (!empty($tenantState) && !empty($custState) && $tenantState !== 
 
             <!-- Notes & Direct Settlement Section -->
             <div class="pt-6 border-t border-slate-100 space-y-4">
-                <?php if (!empty($tenant['bank_name']) || !empty($tenant['bank_account_no'])): ?>
-                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1.5">
+                <!-- B2B Direct Settlement Details with Embedded Live UPI QR -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="space-y-1.5 flex-1 w-full">
                         <span class="font-bold text-slate-900 block">
                             <i class="fa-solid fa-building-columns text-blue-600 mr-1"></i> B2B Direct Settlement Details (NEFT / RTGS / IMPS):
                         </span>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                            <div>Bank: <strong class="text-slate-900"><?= e($tenant['bank_name'] ?? '') ?></strong></div>
-                            <div>A/C No: <strong class="font-mono text-slate-900"><?= e($tenant['bank_account_no'] ?? '') ?></strong></div>
-                            <div>IFSC: <strong class="font-mono text-slate-900"><?= e($tenant['bank_ifsc'] ?? '') ?></strong></div>
-                            <?php if (!empty($tenant['upi_id'])): ?>
-                                <div>UPI VPA: <strong class="font-mono text-blue-700"><?= e($tenant['upi_id']) ?></strong></div>
+                            <?php if (!empty($tenant['bank_name'])): ?>
+                                <div>Bank: <strong class="text-slate-900"><?= e($tenant['bank_name']) ?></strong></div>
                             <?php endif; ?>
+                            <?php if (!empty($tenant['bank_account_no'])): ?>
+                                <div>A/C No: <strong class="font-mono text-slate-900"><?= e($tenant['bank_account_no']) ?></strong></div>
+                            <?php endif; ?>
+                            <?php if (!empty($tenant['bank_ifsc'])): ?>
+                                <div>IFSC: <strong class="font-mono text-slate-900"><?= e($tenant['bank_ifsc']) ?></strong></div>
+                            <?php endif; ?>
+                            <div>UPI VPA: <strong class="font-mono text-emerald-700"><?= e($upiVpa) ?></strong></div>
                         </div>
                     </div>
-                <?php endif; ?>
+
+                    <?php if (!$isPaid): ?>
+                        <div class="flex items-center gap-3 pl-0 sm:pl-4 border-t sm:border-t-0 sm:border-l border-slate-200 pt-3 sm:pt-0 shrink-0">
+                            <img src="<?= $qrCodeUrl ?>" alt="Scan to Pay UPI" class="w-16 h-16 rounded-lg border border-slate-200 shadow-2xs bg-white p-1">
+                            <div class="text-[10px] space-y-0.5">
+                                <span class="font-bold text-slate-900 block flex items-center gap-1">
+                                    <i class="fa-solid fa-qrcode text-emerald-600"></i>
+                                    <span>UPI QR Pay</span>
+                                </span>
+                                <span class="text-slate-500 block">GPay · PhonePe · Paytm</span>
+                                <span class="font-mono font-bold text-emerald-700 block"><?= format_cents($totalCents) ?></span>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <div class="flex items-center gap-2 pl-4 border-l border-slate-200 text-emerald-700 font-bold text-xs">
+                            <i class="fa-solid fa-circle-check text-base"></i>
+                            <span>Paid &amp; Reconciled</span>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
                 <div class="text-xs text-slate-500 leading-relaxed">
                     <span class="font-bold text-slate-800 block mb-1">Notes &amp; Terms:</span>

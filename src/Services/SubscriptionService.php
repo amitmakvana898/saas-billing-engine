@@ -99,4 +99,103 @@ class SubscriptionService
 
         return $this->subRepo->updateStatus($currentSub['id'], 'canceled', date('Y-m-d H:i:s'));
     }
+
+    /**
+     * Process recurring subscription renewals and generate automated cycle invoices
+     */
+    public function processRecurringBilling(?string $tenantId = null): array
+    {
+        $pdo = Database::getConnection();
+        
+        $sql = "
+            SELECT s.*, p.name as plan_name, p.price_cents, p.billing_interval, t.name as tenant_name, t.tax_id
+            FROM subscriptions s
+            JOIN plans p ON p.id = s.plan_id
+            JOIN tenants t ON t.id = s.tenant_id
+            WHERE s.status IN ('active', 'trialing')
+        ";
+        if ($tenantId) {
+            $sql .= " AND s.tenant_id = :tenant_id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(['tenant_id' => $tenantId]);
+        } else {
+            $stmt = $pdo->query($sql);
+        }
+        
+        $dueSubs = $stmt->fetchAll();
+        $generatedInvoices = [];
+        
+        foreach ($dueSubs as $sub) {
+            $tid = $sub['tenant_id'];
+            $subtotal = (int)$sub['price_cents'];
+            if ($subtotal <= 0) $subtotal = 199900; // default ₹1,999 for free/trial
+            $tax = (int)round($subtotal * 0.18);
+            $total = $subtotal + $tax;
+            
+            $nextPeriodStart = !empty($sub['current_period_end']) ? $sub['current_period_end'] : date('Y-m-d H:i:s');
+            $interval = ($sub['billing_interval'] === 'yearly') ? '+1 year' : '+1 month';
+            $nextPeriodEnd = date('Y-m-d H:i:s', strtotime($interval, strtotime($nextPeriodStart)));
+            
+            // Advance subscription period
+            $updateStmt = $pdo->prepare("
+                UPDATE subscriptions 
+                SET current_period_start = :start, 
+                    current_period_end = :end, 
+                    status = 'active',
+                    updated_at = NOW() 
+                WHERE id = :id
+            ");
+            $updateStmt->execute([
+                'start' => $nextPeriodStart,
+                'end' => $nextPeriodEnd,
+                'id' => $sub['id']
+            ]);
+            
+            // Generate official recurring invoice
+            $invNumber = $this->invoiceRepo->getNextInvoiceNumber($tid);
+            $itemsJson = json_encode([
+                [
+                    'description' => "Automated Recurring Subscription - {$sub['plan_name']} (" . ucfirst($sub['billing_interval']) . ")",
+                    'hsn' => '998313',
+                    'qty' => 1,
+                    'rate_cents' => $subtotal,
+                    'tax_rate' => 18,
+                    'tax_cents' => $tax,
+                    'amount_cents' => $total
+                ]
+            ]);
+            
+            $paymentToken = bin2hex(random_bytes(24));
+            $invId = $this->invoiceRepo->create([
+                'tenant_id' => $tid,
+                'subscription_id' => $sub['id'],
+                'invoice_number' => $invNumber,
+                'due_date' => date('Y-m-d', strtotime('+15 days')),
+                'subtotal_cents' => $subtotal,
+                'tax_cents' => $tax,
+                'discount_cents' => 0,
+                'total_cents' => $total,
+                'amount_paid_cents' => 0,
+                'currency' => 'INR',
+                'status' => 'open',
+                'billing_reason' => 'subscription_cycle',
+                'notes' => "Automated billing cycle for {$sub['plan_name']} covering period " . date('M d, Y', strtotime($nextPeriodStart)) . " to " . date('M d, Y', strtotime($nextPeriodEnd)),
+                'items_json' => $itemsJson,
+                'payment_token' => $paymentToken
+            ]);
+            
+            audit_log('recurring_billing_generated', "Automated recurring invoice {$invNumber} generated for {$sub['plan_name']} (₹" . number_format($total/100, 2) . ")", $tid);
+            
+            $generatedInvoices[] = [
+                'invoice_id' => $invId,
+                'invoice_number' => $invNumber,
+                'tenant_name' => $sub['tenant_name'],
+                'plan_name' => $sub['plan_name'],
+                'total_cents' => $total,
+                'due_date' => date('Y-m-d', strtotime('+15 days'))
+            ];
+        }
+        
+        return $generatedInvoices;
+    }
 }

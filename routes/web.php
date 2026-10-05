@@ -39,6 +39,9 @@ $router->post('/reset-password/{token}', [AuthController::class, 'resetPassword'
 $router->get('/pay/{token}', [InvoiceController::class, 'publicPay']);
 $router->post('/pay/{token}', [InvoiceController::class, 'processPayment'], [CsrfMiddleware::class]);
 
+// Public Client Self-Service Statement & Ledger Portal
+$router->get('/statement/{id}', [CustomerController::class, 'publicStatement']);
+
 // Standard Tenant Protected Routes (Auth + Tenant Scoping)
 $authScope = [AuthMiddleware::class, TenantScopeMiddleware::class];
 
@@ -73,6 +76,7 @@ $router->get('/api/notifications', [\App\Controllers\NotificationController::cla
 $router->get('/plans', [SubscriptionController::class, 'showPlans'], $authScope);
 $router->post('/plans/upgrade', [SubscriptionController::class, 'upgrade'], array_merge($authScope, [BillingAdminMiddleware::class, CsrfMiddleware::class]));
 $router->post('/plans/cancel', [SubscriptionController::class, 'cancel'], array_merge($authScope, [BillingAdminMiddleware::class, CsrfMiddleware::class]));
+$router->post('/plans/process-recurring', [SubscriptionController::class, 'runRecurringBilling'], array_merge($authScope, [BillingAdminMiddleware::class, CsrfMiddleware::class]));
 
 // Team Management & RBAC
 $router->get('/team', [TeamController::class, 'index'], $authScope);

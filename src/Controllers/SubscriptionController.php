@@ -60,4 +60,22 @@ class SubscriptionController
         flash('info', 'Your subscription has been canceled. Your services remain active until the end of the current billing cycle.');
         return redirect('/dashboard');
     }
+
+    public function runRecurringBilling(Request $request): Response
+    {
+        $tenant = current_tenant();
+        try {
+            $invoices = $this->subService->processRecurringBilling($tenant['id']);
+            $count = count($invoices);
+            if ($count > 0) {
+                $firstInv = $invoices[0]['invoice_number'];
+                flash('success', "Auto-Billing Scheduler executed! Successfully generated {$count} recurring renewal invoice ({$firstInv}) with automated 18% GST.");
+            } else {
+                flash('info', "Auto-Billing Scheduler executed: All subscriptions are currently up to date.");
+            }
+        } catch (\Throwable $e) {
+            flash('error', "Auto-billing process failed: " . $e->getMessage());
+        }
+        return redirect('/invoices');
+    }
 }

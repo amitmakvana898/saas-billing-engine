@@ -195,13 +195,20 @@
             </div>
         </div>
 
-        <!-- B2B Bank Transfer Details -->
-        <?php if (!empty($tenant['bank_name']) || !empty($tenant['bank_account_no']) || !empty($tenant['upi_id'])): ?>
-            <div class="mt-6 pt-6 border-t border-slate-200 text-xs text-slate-700">
-                <span class="font-bold text-slate-900 block mb-2">
-                    <i class="fa-solid fa-building-columns text-blue-600 mr-1"></i> B2B Direct Settlement Details (NEFT / RTGS / IMPS):
-                </span>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-[11px]">
+        <!-- B2B Bank Transfer & Embedded UPI QR Code Details -->
+        <?php 
+            $upiVpa = !empty($tenant['upi_id']) ? $tenant['upi_id'] : 'billing@saasify.app';
+            $payAmountRupees = number_format($totalCents / 100, 2, '.', '');
+            $payeeName = urlencode($tenant['name'] ?? 'SaaSify Organization');
+            $upiUri = "upi://pay?pa={$upiVpa}&pn={$payeeName}&am={$payAmountRupees}&cu=INR&tn=" . urlencode($invoice['invoice_number']);
+            $qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($upiUri);
+        ?>
+        <div class="mt-6 pt-6 border-t border-slate-200 text-xs text-slate-700">
+            <span class="font-bold text-slate-900 block mb-2">
+                <i class="fa-solid fa-building-columns text-blue-600 mr-1"></i> B2B Payment &amp; Instant UPI Settlement:
+            </span>
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div class="grid grid-cols-2 gap-3 text-[11px] flex-1">
                     <?php if (!empty($tenant['bank_name'])): ?>
                         <div><span class="text-slate-500 block">Bank Name</span><strong class="text-slate-900"><?= e($tenant['bank_name']) ?></strong></div>
                     <?php endif; ?>
@@ -211,12 +218,30 @@
                     <?php if (!empty($tenant['bank_ifsc'])): ?>
                         <div><span class="text-slate-500 block">IFSC Code</span><strong class="font-mono text-slate-900"><?= e($tenant['bank_ifsc']) ?></strong></div>
                     <?php endif; ?>
-                    <?php if (!empty($tenant['upi_id'])): ?>
-                        <div><span class="text-slate-500 block">UPI VPA</span><strong class="font-mono text-emerald-700"><?= e($tenant['upi_id']) ?></strong></div>
-                    <?php endif; ?>
+                    <div><span class="text-slate-500 block">UPI VPA</span><strong class="font-mono text-emerald-700"><?= e($upiVpa) ?></strong></div>
                 </div>
+
+                <?php if (!$isPaid): ?>
+                    <!-- High-Res Live UPI QR Code -->
+                    <div class="flex items-center gap-3 pl-0 sm:pl-4 border-t sm:border-t-0 sm:border-l border-slate-200 pt-3 sm:pt-0 shrink-0">
+                        <img src="<?= $qrCodeUrl ?>" alt="Scan to Pay UPI" class="w-20 h-20 rounded-lg border border-slate-200 shadow-2xs bg-white p-1">
+                        <div class="text-[10px] space-y-0.5">
+                            <span class="font-bold text-slate-900 block flex items-center gap-1">
+                                <i class="fa-solid fa-qrcode text-emerald-600"></i>
+                                <span>Scan &amp; Pay via UPI</span>
+                            </span>
+                            <span class="text-slate-500 block">GPay, PhonePe, Paytm</span>
+                            <span class="font-mono font-bold text-emerald-700 block"><?= format_cents($totalCents) ?></span>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="flex items-center gap-2 pl-4 border-l border-slate-200 text-emerald-700 font-bold text-xs">
+                        <i class="fa-solid fa-circle-check text-lg"></i>
+                        <span>Settled &amp; Reconciled</span>
+                    </div>
+                <?php endif; ?>
             </div>
-        <?php endif; ?>
+        </div>
 
         <div class="pt-6 text-center text-xs text-slate-400">
             <p>Thank you for your business. For any invoice queries, contact <?= e($tenant['name']) ?>.</p>

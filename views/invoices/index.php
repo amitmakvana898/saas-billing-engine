@@ -264,8 +264,10 @@ foreach ($invoices as $inv) {
                 $total = (int)($inv['total_cents'] ?? ($inv['subtotal_cents'] + $inv['tax_cents']));
                 $clientName = $inv['client_display_name'] ?? $inv['customer_name'] ?? 'Direct Client';
                 $company = $inv['client_company'] ?? '';
-                $publicPayUrl = app_url('/pay/' . ($inv['payment_token'] ?? $inv['id']));
-                $waText = urlencode("Hello, please find your tax invoice {$inv['invoice_number']} for " . format_cents($total) . ". You can view and pay online here: {$publicPayUrl}");
+                $waMsg = urlencode("Hello {$clientName}, please find your official tax invoice {$inv['invoice_number']} for " . format_cents($total) . ". You can view details and settle online here: {$publicPayUrl}");
+                $cPhone = preg_replace('/[^0-9]/', '', $inv['customer_phone'] ?? $inv['client_phone'] ?? '');
+                if (!empty($cPhone) && strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
+                $waUrl = !empty($cPhone) ? "https://wa.me/{$cPhone}?text={$waMsg}" : "https://api.whatsapp.com/send?text={$waMsg}";
                 $searchKeywords = strtolower(implode(' ', array_filter([
                     $inv['invoice_number'],
                     $clientName,
@@ -362,8 +364,8 @@ foreach ($invoices as $inv) {
                                         class="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition" title="Copy Payment Link">
                                     <i class="fa-regular fa-copy text-xs"></i>
                                 </button>
-                                <a href="https://api.whatsapp.com/send?text=<?= $waText ?>" target="_blank" 
-                                   class="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition" title="Share via WhatsApp">
+                                <a href="<?= $waUrl ?>" target="_blank" 
+                                   class="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition" title="Dispatch to Client WhatsApp">
                                     <i class="fa-brands fa-whatsapp text-xs"></i>
                                 </a>
                             <?php endif; ?>
@@ -433,8 +435,10 @@ foreach ($invoices as $inv) {
                         $total = (int)($inv['total_cents'] ?? ($inv['subtotal_cents'] + $inv['tax_cents']));
                         $clientName = $inv['client_display_name'] ?? $inv['customer_name'] ?? 'Direct Client';
                         $company = $inv['client_company'] ?? '';
-                        $publicPayUrl = app_url('/pay/' . ($inv['payment_token'] ?? $inv['id']));
-                        $waText = urlencode("Hello, please find your tax invoice {$inv['invoice_number']} for " . format_cents($total) . ". You can view and pay online here: {$publicPayUrl}");
+                        $waMsg = urlencode("Hello {$clientName}, please find your official tax invoice {$inv['invoice_number']} for " . format_cents($total) . ". You can view details and settle online here: {$publicPayUrl}");
+                        $cPhone = preg_replace('/[^0-9]/', '', $inv['customer_phone'] ?? $inv['client_phone'] ?? '');
+                        if (!empty($cPhone) && strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
+                        $waUrl = !empty($cPhone) ? "https://wa.me/{$cPhone}?text={$waMsg}" : "https://api.whatsapp.com/send?text={$waMsg}";
                         $searchKeywords = strtolower(implode(' ', array_filter([
                             $inv['invoice_number'],
                             $clientName,
@@ -507,8 +511,8 @@ foreach ($invoices as $inv) {
                                                 class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition" title="Copy Pay Link">
                                             <i class="fa-regular fa-copy text-xs"></i>
                                         </button>
-                                        <a href="https://api.whatsapp.com/send?text=<?= $waText ?>" target="_blank" 
-                                           class="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition" title="Share WhatsApp">
+                                        <a href="<?= $waUrl ?>" target="_blank" 
+                                           class="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition" title="Dispatch to Client WhatsApp">
                                             <i class="fa-brands fa-whatsapp text-xs"></i>
                                         </a>
                                     <?php endif; ?>

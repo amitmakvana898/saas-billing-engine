@@ -33,7 +33,18 @@ $currentPlanName = $currentSub['plan_name'] ?? 'Free Starter';
             </div>
 
             <!-- Instant Actions Dock -->
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center flex-wrap gap-3">
+                <?php if (can_manage_billing()): ?>
+                    <form method="POST" action="<?= app_url('/plans/process-recurring') ?>" class="inline-block"
+                          onsubmit="return confirm('Trigger Automated Recurring Billing Engine now? This will scan subscriptions and generate automated tax-compliant cycle invoices.');">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 transition flex items-center space-x-2">
+                            <i class="fa-solid fa-arrows-spin text-xs"></i>
+                            <span>Run Auto-Billing Cycle</span>
+                        </button>
+                    </form>
+                <?php endif; ?>
+
                 <a href="<?= app_url('/dashboard') ?>" 
                    class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10 font-bold text-xs transition flex items-center space-x-2">
                     <i class="fa-solid fa-arrow-left text-xs"></i>

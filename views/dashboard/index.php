@@ -533,8 +533,8 @@ if (empty($chartLabels)) {
          LAYER 5: FINANCIAL TRAJECTORY ENGINE & AUDIT STREAM
          ══════════════════════════════════════════════════════════════════ -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- Chart.js Trend Visualizer (Col 1-8) -->
-        <div class="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+        <!-- Chart 1: Line Visualizer (Col 1-7) -->
+        <div class="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
             <div class="flex items-center justify-between">
                 <div>
                     <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400 block mb-0.5">Historical Treasury Vector</span>
@@ -551,8 +551,45 @@ if (empty($chartLabels)) {
             </div>
         </div>
 
-        <!-- Audit Trail Telemetry Stream (Col 9-12) -->
-        <div class="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+        <!-- Chart 2: 18% GST Compliance & Treasury Radar (Col 8-12) -->
+        <div class="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400 block mb-0.5">Statutory Tax Radar</span>
+                    <h3 class="text-base font-black text-slate-900">18% GST Dual-Split Pool</h3>
+                </div>
+                <span class="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-mono text-[10px] font-bold uppercase">
+                    Auto-ITC Pool
+                </span>
+            </div>
+
+            <div class="h-52 sm:h-56 relative flex items-center justify-center">
+                <canvas id="gstRadarChart"></canvas>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center font-mono">
+                <div class="p-2 rounded-xl bg-slate-50 border border-slate-100">
+                    <span class="text-[9px] font-bold text-slate-500 block uppercase font-sans">Net Base</span>
+                    <span class="text-xs font-bold text-slate-900"><?= format_cents(max(0, $totalVol - $totalGst)) ?></span>
+                </div>
+                <div class="p-2 rounded-xl bg-blue-50/60 border border-blue-100">
+                    <span class="text-[9px] font-bold text-blue-700 block uppercase font-sans">CGST (9%)</span>
+                    <span class="text-xs font-bold text-blue-700"><?= format_cents((int)round($totalGst / 2)) ?></span>
+                </div>
+                <div class="p-2 rounded-xl bg-indigo-50/60 border border-indigo-100">
+                    <span class="text-[9px] font-bold text-indigo-700 block uppercase font-sans">SGST (9%)</span>
+                    <span class="text-xs font-bold text-indigo-700"><?= format_cents((int)round($totalGst / 2)) ?></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         LAYER 6: LIVE AUDIT TRAIL STREAM
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="grid grid-cols-1 gap-6">
+        <!-- Audit Trail Telemetry Stream -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
             <div>
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                     <span class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -696,5 +733,54 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Initialize 18% GST Dual-Split Radar Doughnut Chart
+    const gstCtx = document.getElementById('gstRadarChart');
+    if (gstCtx) {
+        new Chart(gstCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Net Taxable Base', 'CGST (9%)', 'SGST (9%)'],
+                datasets: [{
+                    data: [
+                        <?= round(max(0, $totalVol - $totalGst) / 100, 2) ?>,
+                        <?= round(($totalGst / 2) / 100, 2) ?>,
+                        <?= round(($totalGst / 2) / 100, 2) ?>
+                    ],
+                    backgroundColor: ['#0C66E4', '#3B82F6', '#6366F1'],
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF',
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { family: 'Plus Jakarta Sans', size: 10, weight: '600' },
+                            boxWidth: 10,
+                            padding: 12
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#0F172A',
+                        titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+                        bodyFont: { family: 'JetBrains Mono', size: 11 },
+                        padding: 10,
+                        cornerRadius: 10,
+                        callbacks: {
+                            label: function(ctx) {
+                                return ' ' + ctx.label + ': ₹' + Number(ctx.parsed).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 });
 </script>
