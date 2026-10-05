@@ -55,7 +55,12 @@ class InvoiceController
         $user = auth_user();
 
         $data = $request->all();
-        $result = $this->invoiceService->createInvoice($tenant['id'], $data, $user);
+        try {
+            $result = $this->invoiceService->createInvoice($tenant['id'], $data, $user);
+        } catch (\Throwable $e) {
+            flash('error', $e->getMessage());
+            return redirect('/invoices/create');
+        }
 
         flash('success', "Invoice {$result['invoice_number']} created successfully! You can now share the payment link or print it.");
         return redirect('/invoices/' . $result['id']);
@@ -154,6 +159,15 @@ class InvoiceController
         return redirect('/invoices/' . $id);
     }
 
+    private function sanitizeCsvField($val): string
+    {
+        $str = (string)($val ?? '');
+        if ($str !== '' && in_array($str[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return "'" . $str;
+        }
+        return $str;
+    }
+
     public function exportCsv(Request $request): Response
     {
         $tenant = current_tenant();
@@ -206,19 +220,19 @@ class InvoiceController
 
         foreach ($invoices as $inv) {
             fputcsv($stream, [
-                $inv['invoice_number'],
-                $inv['client_display_name'] ?? $inv['customer_name'] ?? 'N/A',
+                $this->sanitizeCsvField($inv['invoice_number']),
+                $this->sanitizeCsvField($inv['client_display_name'] ?? $inv['customer_name'] ?? 'N/A'),
                 date('Y-m-d', strtotime($inv['created_at'])),
-                $inv['due_date'] ?? 'N/A',
+                $this->sanitizeCsvField($inv['due_date'] ?? 'N/A'),
                 number_format($inv['subtotal_cents'] / 100, 2, '.', ''),
                 number_format($inv['tax_cents'] / 100, 2, '.', ''),
                 number_format(($inv['total_cents'] ?? ($inv['subtotal_cents'] + $inv['tax_cents'])) / 100, 2, '.', ''),
                 number_format($inv['amount_paid_cents'] / 100, 2, '.', ''),
                 $inv['currency'],
                 strtoupper($inv['status']),
-                $inv['payment_method'] ?? 'N/A',
-                $freshTenant['name'] ?? '',
-                $freshTenant['tax_id'] ?? 'N/A',
+                $this->sanitizeCsvField($inv['payment_method'] ?? 'N/A'),
+                $this->sanitizeCsvField($freshTenant['name'] ?? ''),
+                $this->sanitizeCsvField($freshTenant['tax_id'] ?? 'N/A'),
             ]);
         }
 
@@ -305,12 +319,12 @@ class InvoiceController
             $sgst = !$isInterstate ? number_format(round($taxCents / 2) / 100, 2, '.', '') : '0.00';
 
             fputcsv($stream, [
-                !empty($custGstin) ? $custGstin : 'URP',
-                $inv['client_display_name'] ?? $inv['customer_name'] ?? 'Direct B2B Client',
-                $inv['invoice_number'],
+                !empty($custGstin) ? $this->sanitizeCsvField($custGstin) : 'URP',
+                $this->sanitizeCsvField($inv['client_display_name'] ?? $inv['customer_name'] ?? 'Direct B2B Client'),
+                $this->sanitizeCsvField($inv['invoice_number']),
                 date('d-M-Y', strtotime($inv['created_at'])),
                 number_format($totalCents / 100, 2, '.', ''),
-                $custState . '-State',
+                $this->sanitizeCsvField($custState . '-State'),
                 'N',
                 '18.0',
                 'Regular B2B',

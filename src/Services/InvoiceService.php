@@ -111,20 +111,9 @@ class InvoiceService
             ];
         }
 
-        // Fallback default item if none provided
+        // Validate that at least one valid line item is provided
         if (empty($items)) {
-            $defaultSubtotal = 100000; // ₹1,000
-            $defaultTax = 18000; // 18% GST = ₹180
-            $subtotalCents = $defaultSubtotal;
-            $taxCents = $defaultTax;
-            $items[] = [
-                'description' => 'Professional Software Consulting & Technical Services',
-                'qty' => 1,
-                'rate_cents' => $defaultSubtotal,
-                'tax_rate' => 18,
-                'tax_cents' => $defaultTax,
-                'amount_cents' => $defaultSubtotal + $defaultTax,
-            ];
+            throw new \InvalidArgumentException('Please add at least one valid line item with a description and rate.');
         }
 
         $discountPercent = max(0, min(100, (float)($data['discount_percent'] ?? 0)));
@@ -132,6 +121,12 @@ class InvoiceService
         $totalCents = max(0, $subtotalCents + $taxCents - $discountCents);
 
         $invoiceNumber = !empty($data['invoice_number']) ? trim($data['invoice_number']) : $this->getNextInvoiceNumber($tenantId);
+
+        // Check for duplicate invoice number within tenant
+        $existingInvoice = $this->invoiceRepo->findById($invoiceNumber, $tenantId);
+        if ($existingInvoice) {
+            throw new \InvalidArgumentException("Invoice sequence number '{$invoiceNumber}' already exists. Please specify a unique invoice sequence.");
+        }
         $dueDate = !empty($data['due_date']) ? $data['due_date'] : date('Y-m-d', strtotime('+15 days'));
         $status = (!empty($data['mark_paid']) && $data['mark_paid'] == '1') ? 'paid' : 'open';
 
@@ -186,6 +181,10 @@ class InvoiceService
 
             if ($invoice['status'] === 'paid') {
                 return ['success' => true, 'already_paid' => true, 'message' => 'This invoice has already been settled.'];
+            }
+
+            if ($invoice['status'] === 'void') {
+                return ['success' => false, 'error' => 'This invoice has been voided/cancelled by the issuer. Online payments cannot be accepted.'];
             }
 
             $method = $paymentData['payment_method'] ?? 'upi';

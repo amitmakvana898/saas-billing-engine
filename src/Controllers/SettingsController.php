@@ -64,14 +64,42 @@ class SettingsController
             $allowedExts = ['png', 'jpg', 'jpeg', 'svg', 'webp'];
 
             if (in_array($ext, $allowedExts, true) && filesize($tmpPath) <= 2 * 1024 * 1024) {
-                $uploadDir = __DIR__ . '/../../public/uploads/logos';
-                if (!is_dir($uploadDir)) {
-                    @mkdir($uploadDir, 0777, true);
+                // Verify real MIME type
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime = finfo_file($finfo, $tmpPath);
+                finfo_close($finfo);
+
+                $allowedMimes = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'image/svg', 'text/plain', 'text/xml'];
+                $isSafe = in_array($mime, $allowedMimes, true);
+
+                // Anti-XSS Check: If SVG or XML, strictly check for malicious script payloads
+                if ($isSafe && ($ext === 'svg' || strpos($mime, 'svg') !== false)) {
+                    $svgContent = file_get_contents($tmpPath);
+                    $blockedPatterns = ['/<script/i', '/javascript\s*:/i', '/onload\s*=/i', '/onerror\s*=/i', '/onclick\s*=/i', '/<iframe/i', '/<object/i', '/<embed/i', '/data:\s*text\/html/i'];
+                    foreach ($blockedPatterns as $pattern) {
+                        if (preg_match($pattern, $svgContent)) {
+                            flash('error', 'Security Warning: Uploaded SVG file contains unsafe script attributes or tags.');
+                            return redirect('/settings');
+                        }
+                    }
+                } elseif ($isSafe && in_array($ext, ['png', 'jpg', 'jpeg', 'webp'], true)) {
+                    // Double check image validity
+                    if (@getimagesize($tmpPath) === false) {
+                        flash('error', 'Uploaded file is not a valid image.');
+                        return redirect('/settings');
+                    }
                 }
-                $safeName = 'logo_' . substr(md5($tenantId), 0, 10) . '_' . time() . '.' . $ext;
-                $destPath = $uploadDir . '/' . $safeName;
-                if (move_uploaded_file($tmpPath, $destPath) || @copy($tmpPath, $destPath)) {
-                    $logoUrl = app_url('/uploads/logos/' . $safeName);
+
+                if ($isSafe) {
+                    $uploadDir = __DIR__ . '/../../public/uploads/logos';
+                    if (!is_dir($uploadDir)) {
+                        @mkdir($uploadDir, 0777, true);
+                    }
+                    $safeName = 'logo_' . substr(md5($tenantId), 0, 10) . '_' . time() . '.' . $ext;
+                    $destPath = $uploadDir . '/' . $safeName;
+                    if (move_uploaded_file($tmpPath, $destPath) || @copy($tmpPath, $destPath)) {
+                        $logoUrl = app_url('/uploads/logos/' . $safeName);
+                    }
                 }
             }
         }

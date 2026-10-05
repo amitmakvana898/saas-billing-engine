@@ -268,6 +268,11 @@ class CustomerController
             return redirect('/customers');
         }
 
+        if (filesize($fileTmp) > 5 * 1024 * 1024) {
+            flash('error', 'CSV file size exceeds the maximum allowable limit of 5MB.');
+            return redirect('/customers');
+        }
+
         $handle = fopen($fileTmp, 'r');
         if (!$handle) {
             flash('error', 'Failed to read uploaded CSV file.');
