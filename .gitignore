@@ -26,3 +26,8 @@ Thumbs.db
 
 # Cache
 .phpunit.result.cache
+
+# Uploads & Scratch Scripts
+/public/uploads/logos/*
+!/public/uploads/logos/.gitkeep
+/scratch/
