@@ -7,7 +7,7 @@ class Session
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
-            if (!headers_sent()) {
+            if (!headers_sent() && php_sapi_name() !== 'cli') {
                 $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
                     || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
 
@@ -19,7 +19,7 @@ class Session
                     'samesite' => 'Lax'
                 ]);
             }
-            session_start();
+            @session_start();
         }
     }
 
