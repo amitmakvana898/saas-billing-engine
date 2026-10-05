@@ -70,7 +70,7 @@ class SettingsController
                 }
                 $safeName = 'logo_' . substr(md5($tenantId), 0, 10) . '_' . time() . '.' . $ext;
                 $destPath = $uploadDir . '/' . $safeName;
-                if (move_uploaded_file($tmpPath, $destPath)) {
+                if (move_uploaded_file($tmpPath, $destPath) || @copy($tmpPath, $destPath)) {
                     $logoUrl = app_url('/uploads/logos/' . $safeName);
                 }
             }
